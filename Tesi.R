@@ -150,12 +150,26 @@ library(tibble)
 #creo colonna vuota
 merged_data <- add_column(
   merged_data,
-  `age at T0` = NA,   
+  `age_at_T0` = NA,   
   .after = "age"
-)   
+) 
 
 #inserisco le età al T0
 library(lubridate)
-merged_data$`age at T0` <- floor(
+merged_data$`age_at_T0` <- floor(
   interval(merged_data$data_nascita, merged_data$data_prelievo_T0) / years(1)
 )
+
+#inserisco età alla diagnosi 
+
+#creo colonna vuota
+merged_data <- add_column(
+  merged_data,
+  `age_at_diagnosis` = NA,   
+  .after = "data_diagnosi")
+
+#inserisco età al momento della diagnosi 
+merged_data$`age_at_diagnosis` <- floor(
+  interval(merged_data$data_nascita, merged_data$data_diagnosi) / years(1))
+
+merged_data$`age at T0` <- NULL
