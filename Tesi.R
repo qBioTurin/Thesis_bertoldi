@@ -143,3 +143,19 @@ merged_data$simplified_batch <- factor(merged_data$simplified_batch,
 
 Input/
   .gitignore
+
+
+#AGE AT T0
+library(tibble)
+#creo colonna vuota
+merged_data <- add_column(
+  merged_data,
+  `age at T0` = NA,   
+  .after = "age"
+)   
+
+#inserisco le età al T0
+library(lubridate)
+merged_data$`age at T0` <- floor(
+  interval(merged_data$data_nascita, merged_data$data_prelievo_T0) / years(1)
+)
