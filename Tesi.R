@@ -1,3 +1,7 @@
+#per aprire correttamente il file
+library(readxl)
+metadati_pazienti <- read_excel("input/metadata_pazienti.xlsx")
+meta_paper <- read_excel("input/metadata_paper.xlsx")
 
 metadati_pazienti<- metadati_pazienti_lesioni_ecc_2%>% filter(grepl("^(TEC|MAV)", ID))
 
