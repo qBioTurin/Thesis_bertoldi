@@ -172,4 +172,83 @@ merged_data <- add_column(
 merged_data$`age_at_diagnosis` <- floor(
   interval(merged_data$data_nascita, merged_data$data_diagnosi) / years(1))
 
-merged_data$`age at T0` <- NULL
+
+#COMANDO PER SALVARE MERGED_DATA.CSV IN INPUT 
+write.csv(
+  merged_data,
+  "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/merged_data.csv",
+  row.names = FALSE
+)
+
+
+#aggiornamento variabili che risultano sbagliate 
+str(merged_data)
+
+merged_data$cortisone_T6 <- as.numeric(merged_data$cortisone_T6)
+class(merged_data$cortisone_T6)
+
+merged_data$EDSS_T12 <- as.numeric(merged_data$EDSS_T12)
+class(merged_data$EDSS_T12)
+
+merged_data$EDSS_T24 <- as.numeric(merged_data$EDSS_T24)
+
+#aggiusto variabili del paper
+class(merged_data$smoking_habit)
+
+#da chr a categoriche 
+merged_data$naive <- factor(merged_data$naive,
+                                   levels = c("no", "yes"))
+
+merged_data$sex <- factor(merged_data$sex,
+                            levels = c("M", "F"))
+
+merged_data$smoking_habit <- factor(merged_data$smoking_habit,
+                          levels = c("yes", "no"))
+
+merged_data$antibiotic_use <- factor(merged_data$antibiotic_use,
+                          levels = c("yes", "no"))
+
+merged_data$spike_in <- factor(merged_data$spike_in,
+                          levels = c("no", "yes"))
+
+merged_data$glucocorticoid_treatment <- factor(merged_data$glucocorticoid_treatment,
+                          levels = c("positive", "negative"))
+
+merged_data$gc_treatment <- factor(merged_data$gc_treatment,
+                          levels = c("positive", "negative"))
+
+merged_data$prognosis_at_onset <- factor(merged_data$prognosis_at_onset,
+                                   levels = c("positive", "negative"))
+#da numeriche a categoriche 
+merged_data$bone_marrow_lesions <- as.factor(merged_data$bone_marrow_lesions)
+merged_data$subtentorial_lesions <- as.factor(merged_data$subtentorial_lesions)
+merged_data$gadolinium_contrast <- as.factor(merged_data$gadolinium_contrast)
+merged_data$full_recovery <- as.factor(merged_data$full_recovery)
+
+#da chr a Date
+merged_data$sample_collection_date <- as.Date(merged_data$sample_collection_date, format = "%m/%d/%y")
+merged_data$glc_date_before_t0 <- as.Date(merged_data$glc_date_before_t0, format = "%m/%d/%y")
+
+
+#recupero vecchia colonna con merge da meta_paper
+merged_data <- merge(
+  merged_data,
+  meta_paper[, c("ID", "sample_collection_date")],
+  by = "ID",
+  all.x = TRUE)
+merged_data$sample_collection_date.x <- NULL
+
+
+
+library(dplyr)
+
+merged_data <- merged_data %>%
+  relocate(sample_collection_date.y, .after = disease_actvity)
+
+
+names(merged_data)[names(merged_data) == "sample_collection_date.y"] <- "sample_collection_date"
+names(merged_data)[names(merged_data) == "disease_actvity"] <- "disease_activity"
+
+
+
+str(merged_data)
