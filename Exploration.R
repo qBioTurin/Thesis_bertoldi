@@ -60,7 +60,7 @@ merged$simplified_batch<- factor (merged$simplified_batch, levels= c("1-3", "4-6
 
 #analisi descrittitva dell'intera coorte
 summary(merged$age)
-install.packages("ggplot2")
+#install.packages("ggplot2")
 library(ggplot2)
 library (dplyr)
 
@@ -352,7 +352,8 @@ cor.test(
   merged$age_at_diagnosis,
   merged$EDSS_T0,
   method = "spearman",
-  use = "complete.obs"
+  #use = "complete.obs"
+  exact = FALSE
 )
 
  

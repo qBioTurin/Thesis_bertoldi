@@ -92,6 +92,18 @@ merged_data <- merged_data %>%
 merged_data <- merged_data %>%
   mutate(therapy = ifelse(ID == "MAV", "cladribine", therapy))
 
+
+#### DT: utilizza case_when per completare colonna therapy in maniera più sintetica
+merged_data <- merged_data %>%
+  mutate(
+    therapy = case_when(
+      ID == "TEC" ~ "dimethyl_fumarate",
+      ID == "MAV" ~ "cladribine",
+      TRUE        ~ therapy
+    )
+  )
+
+
 merged_data$therapy[grepl("TEC", merged_data$ID)] <- "dimethyl_fumarate"
 merged_data$therapy[grepl("MAV", merged_data$ID)] <- "cladribine"
 
@@ -144,7 +156,7 @@ merged_data$simplified_batch <- factor(merged_data$simplified_batch,
 Input/
   .gitignore
 
-
+#### DT: qui non hai bisogno dei back tick (`) intorno a age_at_T0, perchè non ci sono spazi o caratteri speciali nel nome della colonna.
 #AGE AT T0
 library(tibble)
 #creo colonna vuota
