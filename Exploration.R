@@ -61,8 +61,9 @@ merged$simplified_batch<- factor (merged$simplified_batch, levels= c("1-3", "4-6
 #analisi descrittitva dell'intera coorte
 summary(merged$age)
 install.packages("ggplot2")
+installed.packages("dplyr")
 library(ggplot2)
-library (dplyr)
+library(dplyr)
 
 #####età####
 ggplot(merged, aes(x = age)) +
@@ -130,19 +131,92 @@ merged %>%
     sd = sd(age_at_diagnosis, na.rm = TRUE)
   )
 
-library(ggplot2)
+
+#Boxplot dell’età per farmaco alla diagnosi 
+ggplot(merged, aes(
+  x = ifelse(str_starts(ID, "TEC"), "Tecfidera", "Mavenclad"),
+  y = age_at_diagnosis
+)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(
+    x = "Terapia",
+    y = "Età (anni)",
+    title = "Distribuzione dell'età alla diagnosi"
+  ) +
+  theme_minimal()
+
+
 ######
 
 ######EDSS baseline#####
 ggplot(merged, aes(x = EDSS_T0)) +
   geom_histogram(bins = 15, fill = "orange") +
   theme_minimal()
+
+#creo colonna group per differenziare i gruppi 
+
+library(dplyr)
+library(stringr)
+
+merged <- merged %>%
+  mutate(
+    GROUP = str_extract(ID, "^[A-Z]+")
+  )
+
+#EDSS baseline histogram per TEC e MAV
+
+ggplot(merged, aes(x = EDSS_T0)) +
+  geom_histogram(
+    binwidth = 0.5,
+    fill = "steelblue",
+    color = "black"
+  ) +
+  facet_wrap(~ GROUP, ncol = 1) +
+  theme_minimal()
+
+
+#EDSS baseline TEC e MAV -> density plot (per la forma)
+ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
+  geom_density(alpha = 0.3, linewidth = 1) +
+  theme_minimal()
+
+#EDSS baseline TEC e MAV -> boxplot + jitter (per la dispersione)
+
+ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.5) +
+  theme_minimal()
+
+
 ######
 
 ######distribuzione del sesso#####
 ggplot(merged, aes(x = sex)) +
-  geom_bar(fill = "purple") +
+  geom_bar(fill = "purple", color = "black") +
+  labs(
+    x = "Sesso",
+    y = "Numero di soggetti",
+    title = "Distribuzione del sesso"
+  ) +
   theme_minimal()
+
+#distribuzione sesso tra TEC e MAV 
+
+ggplot(merged, aes(x = sex, fill = sex)) +
+  geom_bar(color = "black") +
+  facet_wrap(~ GROUP) +
+  theme_minimal()
+
+
+#con percentuali 
+ggplot(merged, aes(x = sex, fill = sex)) +
+  geom_bar(aes(y = after_stat(prop), group = GROUP)) +
+  facet_wrap(~ GROUP) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+
+
 ######
 
 #####naive vs non-naive per farmaco#### 
@@ -292,9 +366,8 @@ MAV_long %>%
 ######
 
 
+
 ####andamento delle lesioni in TEC e MAV####
-
-
 library(dplyr)
 library(tidyr)
 library(stringr)
@@ -532,7 +605,6 @@ summary(model)
 #sono diversi nei pazienti trattati con Tecfidera vs Mavenclad, 
 #una volta tenuto conto di BMI, fumo e attività fisica? 
 
-class(edss_long$farmaco)
 edss_long$farmaco <- factor(edss_long$farmaco)
 edss_long$farmaco <- relevel(edss_long$farmaco, ref = "TEC")
 
