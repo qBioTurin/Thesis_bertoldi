@@ -1,3 +1,4 @@
+source("library.R")
 
 #considerazioni su variabili da analizzare
 colnames(merged_data)
@@ -60,14 +61,7 @@ merged$simplified_batch<- factor (merged$simplified_batch, levels= c("1-3", "4-6
 
 #analisi descrittitva dell'intera coorte
 summary(merged$age)
-<<<<<<< HEAD
-#install.packages("ggplot2")
-=======
-install.packages("ggplot2")
-installed.packages("dplyr")
->>>>>>> 5f4646e8ddc8cfd6c6187e29b30475e594cd32b0
-library(ggplot2)
-library(dplyr)
+
 
 #####età####
 ggplot(merged, aes(x = age)) +
@@ -364,11 +358,8 @@ ggplot(MAV_long, aes(x = Tempo, y = EDSS)) +
 
 MAV_long %>%
   group_by(Tempo) %>%
-  summarise(N = sum(!is.na(EDSS))) #al 21/4 i tempi sono squilibrati per i tempi 
+  summarise(N = sum(!is.na(EDSS))) #al 21/4 i dati sono squilibrati per i tempi 
 ######
-
-######
-
 
 
 ####andamento delle lesioni in TEC e MAV####
