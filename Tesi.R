@@ -1,13 +1,13 @@
+#utilizzo di source per i pacchetti 
+source("library.R")
+
 #per aprire correttamente il file
-library(readxl)
 metadati_pazienti <- read_excel("input/metadata_pazienti.xlsx")
 meta_paper <- read_excel("input/metadata_paper.xlsx")
-
 metadati_pazienti<- metadati_pazienti_lesioni_ecc_2%>% filter(grepl("^(TEC|MAV)", ID))
-
 metadati_pazienti <- metadati_pazienti[ , -2]
-
 str(metadati_pazienti)
+
 #DATE DA POSIX
 metadati_pazienti$`data di nascita`<- as.Date(metadati_pazienti$`data di nascita`, origin= "1899-12-30")
 
@@ -67,15 +67,21 @@ metadati_pazienti<- metadati_pazienti %>% rename(lesioni_T36 = `lesioni T36`)
 metadati_pazienti<- metadati_pazienti %>% rename (relapse_T36 = `relapse T36`)
 metadati_pazienti<- metadati_pazienti %>% rename (cortisone_T36 = `cortisone T36`)
 metadati_pazienti<- metadati_pazienti %>% rename (NUOVA_TERAPIA = `nuova TERAPIA`)
-
-
 meta_paper<- metadata_paper%>% filter(grepl("^(TEC|MAV)", id))
+
+##possibile utilizzare library(janitor) e funzione clean_names()
 
 meta_paper <- meta_paper %>% 
   rename(ID = id)
 
-meta_paper <- meta_paper[ , -c(1,3,13,23,24,25,26,27,37,38,39,40,41,42,47)]
-ncol(meta_paper)
+#comando  dplyr per eliminare le colonne da meta_paper
+colnames(meta_paper)[c(1,3,13,23,24,25,26,27,37,38,39,40,41,42,47)]
+
+meta_paper <- meta_paper %>%
+  select(-...1, -category, -edss, -edss_t0, -edss_t12, -edss_t24, -onset_date, 
+         -diagnosis_date, -new_lesions_t12, -new_lesions_t24, -relapse_t12, 
+         -relapse_t24, -medas_percent, -therapy_change, -center)
+
 
 meta_paper$ID <- sub("T0$", "", meta_paper$ID)
 
@@ -85,15 +91,8 @@ merged_data <- full_join(metadati_pazienti, meta_paper, by = "ID")
 merged_data$naive[merged_data$ID == "MAV07"] <- "no"
 
 
-#COMPLETARE COLONNA THERAPY 
-merged_data <- merged_data %>%
-  mutate(therapy = ifelse(ID == "TEC", "dimethyl_fumarate", therapy))
+#COMPLETARE COLONNA THERAPY con comando sintetico
 
-merged_data <- merged_data %>%
-  mutate(therapy = ifelse(ID == "MAV", "cladribine", therapy))
-
-
-#### DT: utilizza case_when per completare colonna therapy in maniera più sintetica
 merged_data <- merged_data %>%
   mutate(
     therapy = case_when(
@@ -103,9 +102,6 @@ merged_data <- merged_data %>%
     )
   )
 
-
-merged_data$therapy[grepl("TEC", merged_data$ID)] <- "dimethyl_fumarate"
-merged_data$therapy[grepl("MAV", merged_data$ID)] <- "cladribine"
 
 #INSERIMENTO SEX MANCANTI 
 merged_data$sex[merged_data$ID == "MAV07"] <- "F"
@@ -153,22 +149,18 @@ merged_data$simplified_batch <- factor(merged_data$simplified_batch,
                               levels = c("1-3", "4-5"))
 
 
-Input/
-  .gitignore
-
-#### DT: qui non hai bisogno dei back tick (`) intorno a age_at_T0, perchè non ci sono spazi o caratteri speciali nel nome della colonna.
 #AGE AT T0
 library(tibble)
 #creo colonna vuota
 merged_data <- add_column(
   merged_data,
-  `age_at_T0` = NA,   
+  age_at_T0 = NA,   
   .after = "age"
 ) 
 
 #inserisco le età al T0
 library(lubridate)
-merged_data$`age_at_T0` <- floor(
+merged_data$age_at_T0 <- floor(
   interval(merged_data$data_nascita, merged_data$data_prelievo_T0) / years(1)
 )
 
@@ -177,11 +169,11 @@ merged_data$`age_at_T0` <- floor(
 #creo colonna vuota
 merged_data <- add_column(
   merged_data,
-  `age_at_diagnosis` = NA,   
+  age_at_diagnosis = NA_real_,   
   .after = "data_diagnosi")
 
 #inserisco età al momento della diagnosi 
-merged_data$`age_at_diagnosis` <- floor(
+merged_data$age_at_diagnosis <- floor(
   interval(merged_data$data_nascita, merged_data$data_diagnosi) / years(1))
 
 
@@ -238,8 +230,10 @@ merged_data$gadolinium_contrast <- as.factor(merged_data$gadolinium_contrast)
 merged_data$full_recovery <- as.factor(merged_data$full_recovery)
 
 #da chr a Date
-merged_data$sample_collection_date <- as.Date(merged_data$sample_collection_date, format = "%m/%d/%y")
-merged_data$glc_date_before_t0 <- as.Date(merged_data$glc_date_before_t0, format = "%m/%d/%y")
+merged_data$sample_collection_date <- as.Date(merged_data$sample_collection_date,
+                                          format = "%m/%d/%y")
+merged_data$glc_date_before_t0 <- as.Date(merged_data$glc_date_before_t0,
+                                          format = "%m/%d/%y")
 
 
 #recupero vecchia colonna con merge da meta_paper
@@ -251,9 +245,6 @@ merged_data <- merge(
 merged_data$sample_collection_date.x <- NULL
 
 
-
-library(dplyr)
-
 merged_data <- merged_data %>%
   relocate(sample_collection_date.y, .after = disease_actvity)
 
@@ -263,4 +254,3 @@ names(merged_data)[names(merged_data) == "disease_actvity"] <- "disease_activity
 
 
 
-str(merged_data)
