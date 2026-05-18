@@ -66,10 +66,21 @@ summary(merged$age)
 #####età####
 ggplot(merged, aes(x = age)) +
   geom_histogram(bins = 20, fill = "steelblue") +
+  geom_vline(aes(xintercept = median(age, na.rm = TRUE)),
+             color = "red", linetype = "dashed", size = 1) +
+  theme_minimal()
+#quale tra i due?
+ggplot(merged, aes(x = age)) +
+  geom_histogram(bins = 20, fill = "steelblue", alpha = 0.7) +
+  geom_density(aes(y = after_stat(count)), color = "darkblue") +
+  geom_vline(aes(xintercept = median(age, na.rm = TRUE)),
+             color = "red", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(age, na.rm = TRUE)),
+             color = "green", linetype = "dotted", size = 1) +
   theme_minimal()
 
+
 #distribuzione età per pazienti TEC (at T0)
-library(stringr)
 merged %>%
   filter(str_starts(ID, "TEC")) %>%
   summarise(
@@ -92,21 +103,30 @@ merged %>%
 
 
 #Boxplot dell’età per farmaco 
-ggplot(merged, aes(
-  x = ifelse(str_starts(ID, "TEC"), "Tecfidera", "Mavenclad"),
-  y = age_at_T0
-)) +
-  geom_boxplot(fill = "lightblue") +
-  labs(
-    x = "Terapia",
-    y = "Età (anni)",
-    title = "Distribuzione dell'età all'inizio della terapia"
+
+ggplot(merged, aes(x = GROUP, y = age)) +
+  # Distribuzione (forma)
+  geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
+  # Boxplot
+  geom_boxplot(width = 0.2, outlier.shape = NA) +
+  # Dati grezzi
+  geom_jitter(width = 0.15, alpha = 0.4) +
+  # Media (punto rosso)
+  stat_summary(fun = mean, geom = "point",
+               shape = 18, size = 3, color = "red") +
+  # Test statistico
+  stat_compare_means(
+    method = "wilcox.test",   #wilcox è più adatto ai miei dati
+    label = "p.format"        # formato p-value leggibile
   ) +
-  theme_minimal()
+  theme_minimal() +
+  labs(
+    title = "Distribuzione dell'età all'inizio della terapia",
+    x = "Terapia",
+    y = "Età (anni)"
+  )
 
 #distribuzione età nei pazienti TEC alla diagnosi 
-library(dplyr)
-library(stringr)
 merged %>%
   filter(str_starts(ID, "TEC")) %>%
   summarise(
@@ -118,8 +138,6 @@ merged %>%
 
 
 #distribuzione età nei pazienti MAV alla diagnosi 
-library(dplyr)
-library(stringr)
 merged %>%
   filter(str_starts(ID, "MAV")) %>%
   summarise(
@@ -131,31 +149,49 @@ merged %>%
 
 
 #Boxplot dell’età per farmaco alla diagnosi 
-ggplot(merged, aes(
-  x = ifelse(str_starts(ID, "TEC"), "Tecfidera", "Mavenclad"),
-  y = age_at_diagnosis
-)) +
-  geom_boxplot(fill = "lightblue") +
-  labs(
-    x = "Terapia",
-    y = "Età (anni)",
-    title = "Distribuzione dell'età alla diagnosi"
+
+ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
+  # Distribuzione (forma)
+  geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
+  # Boxplot
+  geom_boxplot(width = 0.2, outlier.shape = NA) +
+  # Dati grezzi
+  geom_jitter(width = 0.15, alpha = 0.4) +
+  # Media (punto rosso)
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    shape = 18,
+    size = 3,
+    color = "red"
   ) +
-  theme_minimal()
+  # Test statistico (Wilcoxon)
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribuzione dell'età alla diagnosi",
+    x = "Terapia",
+    y = "Età (anni)"
+  )
 
-
+  
 ######
 
 ######EDSS baseline#####
 ggplot(merged, aes(x = EDSS_T0)) +
   geom_histogram(bins = 15, fill = "orange") +
+  geom_vline(
+    aes(xintercept = median(EDSS_T0, na.rm = TRUE)),
+    color = "red",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
   theme_minimal()
 
 #creo colonna group per differenziare i gruppi 
-
-library(dplyr)
-library(stringr)
-
 merged <- merged %>%
   mutate(
     GROUP = str_extract(ID, "^[A-Z]+")
@@ -163,11 +199,34 @@ merged <- merged %>%
 
 #EDSS baseline histogram per TEC e MAV
 
+stats_EDSS_baseline <- merged %>%
+  group_by(GROUP) %>%
+  summarise(
+    mediana = median(EDSS_T0, na.rm = TRUE),
+    media = mean(EDSS_T0, na.rm = TRUE)
+  )
+
+
 ggplot(merged, aes(x = EDSS_T0)) +
   geom_histogram(
     binwidth = 0.5,
     fill = "steelblue",
     color = "black"
+  ) +
+  geom_vline(
+    data = stats,
+    aes(xintercept = mediana),
+    color = "red",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  # Media (linea verde puntinata)
+  geom_vline(
+    data = stats,
+    aes(xintercept = media),
+    color = "green",
+    linetype = "dotted",
+    linewidth = 1
   ) +
   facet_wrap(~ GROUP, ncol = 1) +
   theme_minimal()
@@ -176,13 +235,22 @@ ggplot(merged, aes(x = EDSS_T0)) +
 #EDSS baseline TEC e MAV -> density plot (per la forma)
 ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
   geom_density(alpha = 0.3, linewidth = 1) +
+   geom_vline(
+    data = stats,
+    aes(xintercept = mediana, color = GROUP),
+    linetype = "dashed",
+    linewidth = 1
+  )+
   theme_minimal()
+
+
 
 #EDSS baseline TEC e MAV -> boxplot + jitter (per la dispersione)
 
 ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
   geom_boxplot(alpha = 0.6, outlier.shape = NA) +
   geom_jitter(width = 0.15, alpha = 0.5) +
+  stat_compare_means(method = "wilcox.test", label = "p.format") +
   theme_minimal()
 
 
@@ -227,12 +295,10 @@ ggplot(merged, aes(x = naive, fill = substr(ID, 1, 3))) +
 
 ########## andamento EDSS nel tempo nei TEC #######
 
-library(dplyr)
-
 TEC <- merged %>% 
   filter(grepl("^TEC", ID))
 
-library(tidyr)   #mettere edss in formato lungo (x grafici longitudinali)
+#mettere edss in formato lungo (x grafici longitudinali)
 
 TEC_long <- TEC %>%
   pivot_longer(
@@ -249,7 +315,6 @@ TEC_long$Tempo <- factor(
 )
 
 
-library(ggplot2)
 
 ggplot(TEC_long, aes(x = Tempo, y = EDSS, group = ID)) +
   stat_summary(aes(group = 1),
