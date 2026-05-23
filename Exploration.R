@@ -253,8 +253,58 @@ ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
   stat_compare_means(method = "wilcox.test", label = "p.format") +
   theme_minimal()
 
+####
 
-######
+###andamento EDSS nel tempo con traiettorie individuali####
+
+ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
+  geom_line(alpha = 0.2, color = "grey") +   # linee individuali leggere
+  geom_point(alpha = 0.3, size = 1) +        # punti (molto utili!)
+  stat_summary(fun = mean, geom = "line", 
+               color = "red", size = 1.5) +  # media
+  labs(title = "Evoluzione EDSS nel tempo",
+       x = "Mesi",
+       y = "EDSS") +
+  theme_minimal()
+
+#con differenziamento trattamento
+ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
+  geom_line(aes(color = trattamento), alpha = 0.1) +
+  stat_summary(aes(color = trattamento),
+               fun = mean, geom = "line", size = 1.5) +
+  labs(title = "EDSS nel tempo per trattamento")
+
+      
+#boxplot generale di andamento 
+ggplot(edss_long, aes(x = factor(mesi), y = EDSS)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Distribuzione EDSS nel tempo",
+       x = "Mesi",
+       y = "EDSS")
+
+#boxplot generale andamento per trattamento 
+ggplot(edss_long, aes(x = factor(mesi), y = EDSS, fill = trattamento)) +
+  geom_boxplot() +
+  labs(title = "EDSS nel tempo per trattamento",
+       x = "Mesi",
+       y = "EDSS")
+
+#andamento differenziato per farmaco (line plot with error bars)
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = trattamento)) +
+  stat_summary(fun = mean, geom = "line", size = 1.5) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 1) +
+  labs(title = "Andamento medio EDSS per trattamento")
+
+#variazione EDSS a 12 mesi
+merged <- merged %>%
+  mutate(delta_EDSS_12 = EDSS_T12 - EDSS_T0)
+
+ggplot(merged, aes(x = GROUP, y = delta_EDSS_12)) +
+  geom_boxplot(fill = "orange") +
+  labs(title = "Variazione EDSS a 12 mesi")
+
+wilcox.test(delta_EDSS_12 ~ GROUP, data = merged)
+#####
 
 ######distribuzione del sesso#####
 ggplot(merged, aes(x = sex)) +
@@ -646,6 +696,23 @@ fisher.test(table(merged$smoking_habit, merged$lesion_burden))
 
 
 #Modello lineare misto
+
+
+edss_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("EDSS_T"),
+    names_to = "timepoint",
+    values_to = "EDSS"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
+    trattamento = ifelse(grepl("TEC", ID),
+                         "Tecfidera",
+                         "Mavenclad")
+  )
+
+
+
 #utilizzo di edss_long
 edss_long$MEDAS <- as.numeric(as.character(edss_long$MEDAS))
 
