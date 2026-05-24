@@ -651,6 +651,29 @@ wilcox.test(
   data = merged
 )
 
+#smoking habit <- EDSS long
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = smoking_habit)) +
+  stat_summary(fun = mean, geom = "line")
+
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = smoking_habit)) +
+  stat_summary(fun = mean, geom = "line", size = 1.5) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 1) +
+  labs(title = "EDSS nel tempo per abitudine al fumo",
+       x = "Mesi",
+       y = "EDSS") +
+  theme_minimal()
+
+#controllo
+head(edss_long[, c("timepoint", "mesi")])
+
+kruskal.test(EDSS ~ smoking_habit, data = edss_long %>% filter(mesi == 12))
+
+#uso di modello longitudinale (fumo influenza EDSS nel tempo?)
+
+model <- lmer(EDSS ~ mesi + smoking_habit + (1 | ID),
+              data = edss_long)
+summary(model)
+
 
 #Attività fisica <- EDSS_T0
 
@@ -664,8 +687,42 @@ kruskal.test(
   data = merged
 )
 
+#Attività fisica <- EDSS long
 
-#Stile di vita ↔ ATTIVITÀ RM BASELINE
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = physical_activity)) +
+  stat_summary(fun = mean, geom = "line", size = 1.5) +
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 1) +
+  labs(title = "EDSS nel tempo per attività fisica",
+       x = "Mesi",
+       y = "EDSS") +
+  theme_minimal()
+
+
+kruskal.test(
+  EDSS ~ physical_activity,
+  data = edss_long %>% filter(mesi == 12)
+)
+kruskal.test(
+  EDSS ~ physical_activity,
+  data = edss_long %>% filter(mesi == 24)
+)
+kruskal.test(
+  EDSS ~ physical_activity,
+  data = edss_long %>% filter(mesi == 36)
+)
+
+#modello longitudinale (l’attività fisica cambia la velocità di progressione?)
+model1 <- lmer(EDSS ~ mesi * physical_activity + (1 | ID),
+              data = edss_long)
+
+summary(model1)
+
+
+####
+
+####
+
+####Stile di vita ↔ andamento LESIONI ####
 
 #MEDAS ↔ lesion_burden
 
@@ -708,22 +765,20 @@ edss_long <- merged %>%
     mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
     trattamento = ifelse(grepl("TEC", ID),
                          "Tecfidera",
-                         "Mavenclad")
-  )
+                         "Mavenclad"))
 
 
 
 #utilizzo di edss_long
 edss_long$MEDAS <- as.numeric(as.character(edss_long$MEDAS))
 
-library(lme4)
 
-model <- lmer(
+model2 <- lmer(
   EDSS ~ months * MEDAS + bmi + smoking_habit + physical_activity + (1 | ID),
   data = edss_long
 )
 
-summary(model)
+summary(model2)
 
 
 
