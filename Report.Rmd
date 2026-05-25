@@ -1,0 +1,80 @@
+---
+title: "Report Exploration Bertoldi"
+author: "Cecilia Bertoldi"
+date: "2026-05-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("library.R")
+```
+
+## Introduction: 
+
+A study is currently being conducted involving patients affected by multiple sclerosis, recruited from different clinical centers. Specifically, patients are affiliated with the Clerico and CReSM centers at San Luigi Gonzaga Hospital in Turin, the Molinette Hospital in Turin, as well as centers in Brescia and Naples.
+
+The overall cohort includes 61 patients, of whom 31 are treated with dimethyl fumarate (Tecfidera) and 30 with cladribine (Mavenclad).
+
+Regarding sex distribution, 21 patients are male and 39 are female, showing a predominance of females within the cohort.
+
+The age distribution at treatment initiation is approximately symmetrical, with most patients between 35 and 55 years. Although Tecfidera patients are slightly older on average, the difference is not statistically significant (p = 0.19), and both groups show comparable variability and age range, reflecting a representative adult multiple sclerosis population.
+
+##Descrizione della coorte
+```{r}
+summary(merged)
+summary(merged$age)
+table(merged$sex, useNA = "ifany")
+table(merged$CENTRO)
+table(merged$GROUP)
+
+#% of sex distribution
+ggplot(merged, aes(x = sex, fill = sex)) +
+  geom_bar(aes(y = after_stat(prop), group = GROUP)) +
+  facet_wrap(~ GROUP) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+
+#age distribution
+ggplot(merged, aes(x = age)) +
+  geom_histogram(bins = 20, fill = "steelblue", alpha = 0.7) +
+  geom_density(aes(y = after_stat(count)), color = "darkblue") +
+  geom_vline(aes(xintercept = median(age, na.rm = TRUE)),
+             color = "red", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept = mean(age, na.rm = TRUE)),
+             color = "green", linetype = "dotted", size = 1) +
+  theme_minimal()
+
+#age distribution between TEC and MAV
+ggplot(merged, aes(x = GROUP, y = age)) +
+  geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
+  geom_boxplot(width = 0.2, outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.4) +
+  stat_summary(fun = mean, geom = "point",
+               shape = 18, size = 3, color = "red") +
+  stat_compare_means(
+    method = "wilcox.test",   
+    label = "p.format"        
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribuzione dell'età all'inizio della terapia",
+    x = "Terapia",
+    y = "Età (anni)"
+  )
+
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
