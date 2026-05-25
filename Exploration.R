@@ -754,7 +754,6 @@ fisher.test(table(merged$smoking_habit, merged$lesion_burden))
 
 #Modello lineare misto
 
-
 edss_long <- merged %>%
   pivot_longer(
     cols = starts_with("EDSS_T"),
@@ -767,6 +766,11 @@ edss_long <- merged %>%
                          "Tecfidera",
                          "Mavenclad"))
 
+edss_long <- edss_long %>%
+  mutate(farmaco = case_when(
+    grepl("^MAV", ID) ~ "MAV",
+    grepl("^TEC", ID) ~ "TEC"
+  ))
 
 
 #utilizzo di edss_long
