@@ -216,7 +216,7 @@ ggplot(merged, aes(x = EDSS_T0)) +
     color = "black"
   ) +
   geom_vline(
-    data = stats,
+    data = stats_EDSS_baseline,
     aes(xintercept = mediana),
     color = "red",
     linetype = "dashed",
@@ -224,7 +224,7 @@ ggplot(merged, aes(x = EDSS_T0)) +
   ) +
   # Media (linea verde puntinata)
   geom_vline(
-    data = stats,
+    data = stats_EDSS_baseline,
     aes(xintercept = media),
     color = "green",
     linetype = "dotted",
@@ -238,7 +238,7 @@ ggplot(merged, aes(x = EDSS_T0)) +
 ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
   geom_density(alpha = 0.3, linewidth = 1) +
    geom_vline(
-    data = stats,
+    data = stats_EDSS_baseline,
     aes(xintercept = mediana, color = GROUP),
     linetype = "dashed",
     linewidth = 1
@@ -248,26 +248,57 @@ ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
 
 
 #EDSS baseline TEC e MAV -> boxplot + jitter (per la dispersione)
-
 ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
-  geom_boxplot(alpha = 0.6, outlier.shape = NA) +
-  geom_jitter(width = 0.15, alpha = 0.5) +
-  stat_compare_means(method = "wilcox.test", label = "p.format") +
-  theme_minimal()
-
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.12, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format",
+    label.y = max(merged$EDSS_T0, na.rm = TRUE) + 0.5,
+    size = 4
+  ) +
+  scale_fill_manual(values = c("MAV" = "#E07A73", "TEC" = "#4DB6B3")) +
+  labs(
+    title = "Baseline EDSS by Treatment Group",
+    subtitle = "Wilcoxon rank-sum test",
+    x = "Treatment group",
+    y = "EDSS at baseline"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
 ####
 
 ###andamento EDSS nel tempo con traiettorie individuali####
-
 ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
-  geom_line(alpha = 0.2, color = "grey") +   # linee individuali leggere
-  geom_point(alpha = 0.3, size = 1) +        # punti (molto utili!)
-  stat_summary(fun = mean, geom = "line", 
-               color = "red", size = 1.5) +  # media
-  labs(title = "Evoluzione EDSS nel tempo",
-       x = "Mesi",
-       y = "EDSS") +
-  theme_minimal()
+  geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
+  geom_point(alpha = 0.4, size = 1, color = "grey40") +
+  stat_summary(
+    aes(group = 1),
+    fun.data = mean_se,
+    geom = "ribbon",
+    fill = "red",
+    alpha = 0.2,
+    color = NA
+  ) +
+  stat_summary(
+    aes(group = 1),
+    fun = mean,
+    geom = "line",
+    
+    color = "red",
+    linewidth = 1.5
+  ) +
+  labs(
+    title = "EDSS evolution over time",
+    subtitle = "grey: patients | red: mean ± SE",
+    x = "Months",
+    y = "EDSS"
+  ) +
+  theme_minimal(base_size = 13)
 
 #con differenziamento trattamento
 ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
@@ -724,6 +755,8 @@ summary(model1)
 
 ####
 
+####
+
 ####Stile di vita ↔ andamento LESIONI ####
 
 #MEDAS ↔ lesion_burden
@@ -767,7 +800,6 @@ edss_long <- merged %>%
     trattamento = ifelse(grepl("TEC", ID),
                          "Tecfidera",
                          "Mavenclad"))
-
 edss_long <- edss_long %>%
   mutate(farmaco = case_when(
     grepl("^MAV", ID) ~ "MAV",
