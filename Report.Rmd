@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 source("library.R")
 ```
 
-## Introduction: 
+## Cohort description: 
 
 A study is currently being conducted involving patients affected by multiple sclerosis, recruited from different clinical centers. Specifically, patients are affiliated with the Clerico and CReSM centers at San Luigi Gonzaga Hospital in Turin, the Molinette Hospital in Turin, as well as centers in Brescia and Naples.
 
@@ -19,8 +19,6 @@ The overall cohort includes 61 patients, of whom 31 are treated with dimethyl fu
 Regarding sex distribution, 21 patients are male and 39 are female, showing a predominance of females within the cohort.
 
 The age distribution at treatment initiation is approximately symmetrical, with most patients between 35 and 55 years. Although Tecfidera patients are slightly older on average, the difference is not statistically significant (p = 0.19), and both groups show comparable variability and age range, reflecting a representative adult multiple sclerosis population.
-
-##Descrizione della coorte
 ```{r}
 summary(merged)
 summary(merged$age)
@@ -69,12 +67,72 @@ ggplot(merged, aes(x = GROUP, y = age)) +
 
 ```
 
-## Including Plots
+## Age at diagnosis in the study cohort
+Age at diagnosis was analyzed by treatment group (MAV vs TEC). Both groups show wide and overlapping distributions, with a slight trend toward higher values in the TEC group.
+Mean age at diagnosis was 38.3 years (median 37, SD = 12.0) in the TEC group and 34.4 years (median 32, SD = 10.3) in the MAV group. Variability was similar across groups, though slightly higher in TEC.
+No statistically significant difference was observed between the two groups (p = 0.2), indicating comparable age at diagnosis.
 
-You can also embed plots, for example:
+```{r}
+#TEC at diagnosis
+merged %>%
+  filter(str_starts(ID, "TEC")) %>%
+  summarise(
+    n = n(),
+    eta_media = mean(age_at_diagnosis, na.rm = TRUE),
+    eta_mediana = median(age_at_diagnosis, na.rm = TRUE),
+    sd = sd(age_at_diagnosis, na.rm = TRUE)
+  )
+#MAV at diagnosis
+merged %>%
+  filter(str_starts(ID, "MAV")) %>%
+  summarise(
+    n = n(),
+    eta_media = mean(age_at_diagnosis, na.rm = TRUE),
+    eta_mediana = median(age_at_diagnosis, na.rm = TRUE),
+    sd = sd(age_at_diagnosis, na.rm = TRUE)
+  )
+#Age at diagnosis by treatment group
+ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
+  geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
+  geom_boxplot(width = 0.2, outlier.shape = NA) +
+  geom_jitter(width = 0.15, alpha = 0.4) +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    shape = 18,
+    size = 3,
+    color = "red"
+  ) +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribuzione dell'età alla diagnosi",
+    x = "Terapia",
+    y = "Età (anni)"
+  )
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```
+##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time.
+```{r, echo= FALSE}
+edss_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("EDSS_T"),
+    names_to = "timepoint",
+    values_to = "EDSS"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
+    trattamento = ifelse(grepl("TEC", ID),
+                         "Tecfidera",
+                         "Mavenclad"))
+edss_long <- edss_long %>%
+  mutate(farmaco = case_when(
+    grepl("^MAV", ID) ~ "MAV",
+    grepl("^TEC", ID) ~ "TEC"
+  ))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##Longitudinal EDSS trajectories
