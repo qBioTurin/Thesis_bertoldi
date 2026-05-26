@@ -13,19 +13,22 @@ source("library.R")
 ## Cohort description: 
 
 A study is currently being conducted involving patients affected by multiple sclerosis, recruited from different clinical centers. Specifically, patients are affiliated with the Clerico and CReSM centers at San Luigi Gonzaga Hospital in Turin, the Molinette Hospital in Turin, as well as centers in Brescia and Naples.
+```{r}
+summary(merged)
+table(merged$CENTRO)
+```
 
 The overall cohort includes 61 patients, of whom 31 are treated with dimethyl fumarate (Tecfidera) and 30 with cladribine (Mavenclad).
-
+```{r}
+table(merged$GROUP)
+```
 Regarding sex distribution, 21 patients are male and 39 are female, showing a predominance of females within the cohort.
+```{r}
+table(merged$sex, useNA = "ifany")
+```
 
 The age distribution at treatment initiation is approximately symmetrical, with most patients between 35 and 55 years. Although Tecfidera patients are slightly older on average, the difference is not statistically significant (p = 0.19), and both groups show comparable variability and age range, reflecting a representative adult multiple sclerosis population.
 ```{r}
-summary(merged)
-summary(merged$age)
-table(merged$sex, useNA = "ifany")
-table(merged$CENTRO)
-table(merged$GROUP)
-
 #% of sex distribution
 ggplot(merged, aes(x = sex, fill = sex)) +
   geom_bar(aes(y = after_stat(prop), group = GROUP)) +
@@ -61,16 +64,11 @@ ggplot(merged, aes(x = GROUP, y = age)) +
     x = "Terapia",
     y = "Età (anni)"
   )
-
-
-
-
 ```
 
 ## Age at diagnosis in the study cohort
 Age at diagnosis was analyzed by treatment group (MAV vs TEC). Both groups show wide and overlapping distributions, with a slight trend toward higher values in the TEC group.
 Mean age at diagnosis was 38.3 years (median 37, SD = 12.0) in the TEC group and 34.4 years (median 32, SD = 10.3) in the MAV group. Variability was similar across groups, though slightly higher in TEC.
-No statistically significant difference was observed between the two groups (p = 0.2), indicating comparable age at diagnosis.
 
 ```{r}
 #TEC at diagnosis
@@ -91,6 +89,10 @@ merged %>%
     eta_mediana = median(age_at_diagnosis, na.rm = TRUE),
     sd = sd(age_at_diagnosis, na.rm = TRUE)
   )
+```
+
+No statistically significant difference was observed between the two groups (p = 0.2), indicating comparable age at diagnosis.
+```{r}
 #Age at diagnosis by treatment group
 ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
   geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
@@ -115,8 +117,10 @@ ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
   )
 
 ```
-##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time.
+
+##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time + insertion of column GROUP
 ```{r, echo= FALSE}
+#EDSS_long
 edss_long <- merged %>%
   pivot_longer(
     cols = starts_with("EDSS_T"),
@@ -133,6 +137,82 @@ edss_long <- edss_long %>%
     grepl("^MAV", ID) ~ "MAV",
     grepl("^TEC", ID) ~ "TEC"
   ))
+#GROUP
+merged <- merged %>%
+  mutate(
+    GROUP = str_extract(ID, "^[A-Z]+")
+  ) 
+```
+
+##Baseline EDSS focus
+At baseline, EDSS values were predominantly within the mild–moderate disability range. The distribution differed between treatment groups, with the TEC group showing lower and more concentrated values, while the MAV group appeared more heterogeneous and slightly shifted toward higher EDSS scores. These differences were confirmed by boxplot analysis, which showed a significantly higher baseline EDSS in the MAV group compared to the TEC group (p = 0.006).
+```{r}
+#density plot
+ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
+  geom_density(alpha = 0.3, linewidth = 1) +
+   geom_vline(
+    data = stats_EDSS_baseline,
+    aes(xintercept = mediana, color = GROUP),
+    linetype = "dashed",
+    linewidth = 1
+  )+
+  theme_minimal()
+
+#boxplot+jitter plot
+ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.12, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(
+    method = "wilcox.test",
+    label = "p.format",
+    label.y = max(merged$EDSS_T0, na.rm = TRUE) + 0.5,
+    size = 4
+  ) +
+  scale_fill_manual(values = c("MAV" = "#E07A73", "TEC" = "#4DB6B3")) +
+  labs(
+    title = "Baseline EDSS by Treatment Group",
+    subtitle = "Wilcoxon rank-sum test",
+    x = "Treatment group",
+    y = "EDSS at baseline"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
 ```
 
 ##Longitudinal EDSS trajectories
+EDSS over time shows moderate interindividual variability, with heterogeneous trajectories generally within a mild–moderate range. Mean EDSS remains largely stable, with a slight increase up to around 18–20 months followed by stabilization, suggesting no clear overall progression.
+
+```{r}
+ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
+  geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
+  geom_point(alpha = 0.4, size = 1, color = "grey40") +
+  stat_summary(
+    aes(group = 1),
+    fun.data = mean_se,
+    geom = "ribbon",
+    fill = "red",
+    alpha = 0.2,
+    color = NA
+  ) +
+  stat_summary(
+    aes(group = 1),
+    fun = mean,
+    geom = "line",
+    
+    color = "red",
+    linewidth = 1.5
+  ) +
+  labs(
+    title = "EDSS evolution over time",
+    subtitle = "grey: patients | red: mean ± SE",
+    x = "Months",
+    y = "EDSS"
+  ) +
+  theme_minimal(base_size = 13)
+
+```
+
