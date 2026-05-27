@@ -185,7 +185,6 @@ ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
 
 ##Longitudinal EDSS trajectories
 EDSS over time shows moderate interindividual variability, with heterogeneous trajectories generally within a mild–moderate range. Mean EDSS remains largely stable, with a slight increase up to around 18–20 months followed by stabilization, suggesting no clear overall progression.
-
 ```{r}
 ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
   geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
@@ -215,4 +214,32 @@ ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
   theme_minimal(base_size = 13)
 
 ```
+##EDSS trends by treatment group
+Median EDSS differed between treatment groups over time, with higher baseline values in the MAV group and relatively stable trajectories in both groups, followed by a decrease at later timepoints. Interpretation of late timepoints should be cautious due to reduced sample size.
+```{r}
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
+  stat_summary(
+    fun = median,
+    geom = "line",
+    linewidth = 1.3
+  ) +
+  stat_summary(
+    fun = median,
+    geom = "point",
+    size = 3
+  ) +
+  labs(
+    title = "Median EDSS over time by treatment",
+    x = "Months of follow-up",
+    y = "EDSS",
+    color = "Treatment"
+  ) +
+  theme_minimal()
+```
 
+#Longitudinal analysis: statistical modeling
+A linear mixed-effects model showed a significant treatment effect (lower EDSS in TEC vs MAV), confirming values appreciated at baseline, and a significant interaction between time and treatment, indicating different longitudinal trajectories between groups.
+```{r}
+model3 <- lmer(EDSS ~ mesi * farmaco + (1 | ID), data = edss_long)
+summary(model3)
+```
