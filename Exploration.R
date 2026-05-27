@@ -537,26 +537,20 @@ summary(model3)
 
 
 ####andamento delle lesioni in TEC e MAV####
-library(dplyr)
-library(tidyr)
-library(stringr)
-
 lesioni_prop <- lesioni_long %>%
   group_by(terapia, mesi) %>%
   summarise(
     prop_lesioni = mean(lesioni == 1, na.rm = TRUE),
     .groups = "drop")
 
-library(ggplot2)
-
 ggplot(lesioni_prop, aes(x = mesi, y = prop_lesioni, color = terapia)) +
   geom_line(size = 1.1) +
   geom_point(size = 2) +
   scale_y_continuous(labels = scales::percent) +
   labs(
-    x = "Mesi dal baseline",
-    y = "Pazienti con lesioni (%)",
-    title = "Andamento dell'attività lesionale nel tempo"
+    x = "Months from baseline",
+    y = "Patients with lesions (%)",
+    title = "Lesions activity over time"
   ) +
   theme_minimal()
 
@@ -575,6 +569,7 @@ lesioni_long %>%
 
 
 #####
+
 
 ####BLOCCO 1 — Correlazioni tra variabili BASELINE####
 
@@ -610,14 +605,12 @@ cor.test(
 
 
 #MEDAS ↔ EDSS_T0
-
 cor.test(
   merged$MEDAS,
   merged$EDSS_T0,
   method = "spearman",
   use = "complete.obs"
 )
-
 
 #Età ↔ BMI (controllo demografico) (i pazienti più anziani hanno bmi più alto?)
 
@@ -630,15 +623,13 @@ cor.test(
 
 #EDSS_T0 ↔ presenza di lesioni al baseline (I pazienti con lesioni al baseline hanno EDSS più alto?)
 
-library(ggplot2)
-
 #gadolinium
 ggplot(merged, aes(x = factor(gadolinium_contrast), y = EDSS_T0)) +
   geom_boxplot() +
   labs(
     x = "Gadolinium contrast (T0)",
     y = "EDSS T0",
-    title = "EDSS al baseline e RM con gadolinio"
+    title = "Baseline EDSS and gadolinium-enhancing MRI findings"
   ) +
   theme_minimal()     #i pazienti con gadolinio positivo tendono ad avere EDSS più alto al baseline
 
@@ -653,7 +644,7 @@ ggplot(merged, aes(x = factor(lesion_burden), y = EDSS_T0)) +
   labs(
     x = "Lesion Burden (T0)",
     y = "EDSS T0",
-    title = "EDSS al baseline e carico di lesioni"
+    title = "Baseline EDSS by lesion burden"
   ) +
   theme_minimal()
 
@@ -677,7 +668,7 @@ wilcox.test(
   data = merged)
 
 
-#subtentorial_lesions
+#subtentorial_lesions 
 ggplot(merged, aes(x = factor(subtentorial_lesions), y = EDSS_T0)) +
   geom_boxplot() +
   labs(
@@ -690,19 +681,28 @@ ggplot(merged, aes(x = factor(subtentorial_lesions), y = EDSS_T0)) +
 wilcox.test(
   EDSS_T0 ~ subtentorial_lesions,
   data = merged)
-
-
 ######
 
 ######BLOCCO 2 — Stile di vita ↔ outcome#####
 
 #Fumo <- EDSS_T0
 
-library(ggplot2)
-ggplot(merged, aes(x = smoking_habit, y = EDSS_T0)) +
-  geom_boxplot() +
-  labs(x = "smoking habit", y = "EDSS_T0") +
-  theme_minimal()
+ggplot(merged %>% filter(!is.na(smoking_habit)),
+  aes(x = smoking_habit, y = EDSS_T0, fill = smoking_habit)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(method = "wilcox.test", label = "p.format", size = 4) +
+  scale_fill_manual(values = c("yes" = "#E07A73", "no" = "#4DB6B3")) +
+  labs(
+    title = "Baseline EDSS by smoking status",
+    x = "Smoking status",
+    y = "Baseline EDSS"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
 
 
 wilcox.test(
@@ -736,10 +736,22 @@ summary(model)
 
 #Attività fisica <- EDSS_T0
 
-ggplot(merged, aes(x = physical_activity , y = EDSS_T0)) +
-  geom_boxplot() +
-  labs(x = "Attività fisica", y = "EDSS_T0") +
-  theme_minimal()
+ggplot(merged %>% filter(!is.na(physical_activity)),
+       aes(x = physical_activity, y = EDSS_T0, fill = physical_activity)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(method = "kruskal.test", label = "p.format", size = 4) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Baseline EDSS by physical activity",
+    x = "Physical activity",
+    y = "Baseline EDSS"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
 
 kruskal.test(
   EDSS_T0 ~ physical_activity,
@@ -776,12 +788,6 @@ model1 <- lmer(EDSS ~ mesi * physical_activity + (1 | ID),
 
 summary(model1)
 
-
-####
-
-####
-
-####
 
 ####Stile di vita ↔ andamento LESIONI ####
 
