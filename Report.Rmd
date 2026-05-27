@@ -118,7 +118,7 @@ ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
 
 ```
 
-##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time + insertion of column GROUP
+##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time + insertion of column GROUP + dataset lesion_prop
 ```{r, echo= FALSE}
 #EDSS_long
 edss_long <- merged %>%
@@ -142,6 +142,12 @@ merged <- merged %>%
   mutate(
     GROUP = str_extract(ID, "^[A-Z]+")
   ) 
+#lesion_prop
+lesioni_prop <- lesioni_long %>%
+  group_by(terapia, mesi) %>%
+  summarise(
+    prop_lesioni = mean(lesioni == 1, na.rm = TRUE),
+    .groups = "drop")
 ```
 
 ##Baseline EDSS focus
@@ -242,4 +248,109 @@ A linear mixed-effects model showed a significant treatment effect (lower EDSS i
 ```{r}
 model3 <- lmer(EDSS ~ mesi * farmaco + (1 | ID), data = edss_long)
 summary(model3)
+```
+
+##Disease evolution: lesion activity over time by treatment
+The proportion of patients with new lesions was consistently higher in the MAV group compared to TEC, with a peak at 30 months. Lower activity was observed in the TEC group, although late timepoints should be interpreted with caution due to reduced sample size.
+
+```{r}
+ggplot(lesioni_prop, aes(x = mesi, y = prop_lesioni, color = terapia)) +
+  geom_line(size = 1.1) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = "Months from baseline",
+    y = "Patients with lesions (%)",
+    title = "Lesions activity over time"
+  ) +
+  theme_minimal()
+```
+
+## Exploratory analysis: factors associated with baseline EDSS
+An exploratory analysis was conducted to assess factors associated with baseline EDSS. A significant association was observed between lesion burden and EDSS, with higher lesion load corresponding to increased disability (p = 0.015).
+```{r}
+ggplot(merged, aes(x = factor(lesion_burden), y = EDSS_T0)) +
+  geom_boxplot() +
+  labs(
+    x = "Lesion Burden (T0)",
+    y = "EDSS T0",
+    title = "Baseline EDSS by lesion burden"
+  ) +
+  theme_minimal()
+
+wilcox.test(
+  EDSS_T0 ~ lesion_burden,
+  data = merged)
+
+```
+Patients with gadolinium-enhancing lesions showed higher EDSS values, although this difference did not reach statistical significance (p = 0.165).
+No significant correlations were found between EDSS and age at treatment initiation or age at diagnosis.
+```{r}
+ggplot(merged, aes(x = factor(gadolinium_contrast), y = EDSS_T0)) +
+  geom_boxplot() +
+  labs(
+    x = "Gadolinium contrast (T0)",
+    y = "EDSS T0",
+    title = "Baseline EDSS and gadolinium-enhancing MRI findings"
+  ) +
+  theme_minimal()
+
+wilcox.test(
+  EDSS_T0 ~ gadolinium_contrast,
+  data = merged
+)
+
+```
+
+## Smoking status and baseline EDSS
+A tendency toward higher baseline EDSS values was observed in patients with a history of smoking compared to non-smokers. However, this difference did not reach statistical significance (p = 0.06).
+```{r}
+ggplot(merged %>% filter(!is.na(smoking_habit)),
+  aes(x = smoking_habit, y = EDSS_T0, fill = smoking_habit)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(method = "wilcox.test", label = "p.format", size = 4) +
+  scale_fill_manual(values = c("yes" = "#E07A73", "no" = "#4DB6B3")) +
+  labs(
+    title = "Baseline EDSS by smoking status",
+    x = "Smoking status",
+    y = "Baseline EDSS"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
+
+
+wilcox.test(
+  EDSS_T0 ~ smoking_habit,
+  data = merged
+)
+```
+
+##Physiscal activity and baseline EDSS
+Baseline EDSS differed significantly across levels of physical activity (p = 0.006). Lower EDSS values were observed in more physically active patients, suggesting an inverse association between physical activity and disability.
+```{r}
+ggplot(merged %>% filter(!is.na(physical_activity)),
+       aes(x = physical_activity, y = EDSS_T0, fill = physical_activity)) +
+  geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
+  geom_jitter(width = 0.15, alpha = 0.4, size = 2, color = "black") +
+  stat_compare_means(method = "kruskal.test", label = "p.format", size = 4) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Baseline EDSS by physical activity",
+    x = "Physical activity",
+    y = "Baseline EDSS"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
+
+kruskal.test(
+  EDSS_T0 ~ physical_activity,
+  data = merged
+)
 ```
