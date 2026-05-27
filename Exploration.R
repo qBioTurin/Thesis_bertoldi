@@ -397,8 +397,7 @@ TEC_long$Tempo <- factor(
   labels = c("0", "6", "12", "24", "30", "36")
 )
 
-
-
+#andamento medio EDSS in TEC
 ggplot(TEC_long, aes(x = Tempo, y = EDSS, group = ID)) +
   stat_summary(aes(group = 1),
                fun = mean,
@@ -421,7 +420,7 @@ ggplot(TEC_long, aes(x = Tempo, y = EDSS, group = ID)) +
     x = "Mesi di follow-up",
     y = "EDSS"
   ) +
-  theme_minimal() 
+  theme_minimal()
 #da valutare se considerare solo tempi (0,12,24 in relazione ai dati dei centri esterni)
 
 #alternativa con mediana di EDSS (meglio per dati clinici??)
@@ -507,6 +506,33 @@ ggplot(MAV_long, aes(x = Tempo, y = EDSS)) +
 MAV_long %>%
   group_by(Tempo) %>%
   summarise(N = sum(!is.na(EDSS))) #al 21/4 i dati sono squilibrati per i tempi 
+
+###ATTENZIONE: per il report è meglio un unico grafico
+
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
+  stat_summary(
+    fun = median,
+    geom = "line",
+    linewidth = 1.3
+  ) +
+  stat_summary(
+    fun = median,
+    geom = "point",
+    size = 3
+  ) +
+  labs(
+    title = "Median EDSS over time by treatment",
+    x = "Months of follow-up",
+    y = "EDSS",
+    color = "Treatment"
+  ) +
+  theme_minimal()
+
+#inserisco anche modello longitudinale per il report 
+model3 <- lmer(EDSS ~ mesi * farmaco + (1 | ID), data = edss_long)
+summary(model3)
+
+
 ######
 
 
