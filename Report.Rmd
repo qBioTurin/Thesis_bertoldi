@@ -2,68 +2,155 @@
 title: "Report Exploration Bertoldi"
 author: "Cecilia Bertoldi"
 date: "2026-05-25"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+merged <- read.csv("input/merged_data.csv")
+summary(merged)
 source("library.R")
+
+#GROUP column
+merged <- merged %>%
+  mutate(
+    GROUP = str_extract(ID, "^[A-Z]+")
+  ) 
+#sex_prop
+sex_prop <- merged %>%
+  filter(!is.na(sex)) %>%
+  group_by(GROUP, sex) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(GROUP) %>%
+  mutate(percent = n / sum(n))
+
+#EDSS_long
+edss_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("EDSS_T"),
+    names_to = "timepoint",
+    values_to = "EDSS"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
+    trattamento = ifelse(grepl("TEC", ID),
+                         "Tecfidera",
+                         "Mavenclad"))
+edss_long <- edss_long %>%
+  mutate(farmaco = case_when(
+    grepl("^MAV", ID) ~ "MAV",
+    grepl("^TEC", ID) ~ "TEC"
+  ))
+
+#lesion_long and lesioni_prop
+lesioni_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("lesioni_"),
+    names_to = "mesi",
+    values_to = "lesioni"
+  ) %>%
+  mutate(
+    mesi = str_remove(mesi, "lesioni_T"),   
+    mesi = as.numeric(mesi),
+    terapia = GROUP
+  )
+
+lesioni_prop <- lesioni_long %>%
+  group_by(terapia, mesi) %>%
+  summarise(
+    prop_lesioni = mean(lesioni == 1, na.rm = TRUE),
+    .groups = "drop")
+#stats_EDSS_baseline
+stats_EDSS_baseline <- merged %>%
+  group_by(GROUP) %>%
+  summarise(
+    mediana = median(EDSS_T0, na.rm = TRUE),
+    media = mean(EDSS_T0, na.rm = TRUE)
+  )
+
 ```
 
 ## Cohort description: 
 
 A study is currently being conducted involving patients affected by multiple sclerosis, recruited from different clinical centers. Specifically, patients are affiliated with the Clerico and CReSM centers at San Luigi Gonzaga Hospital in Turin, the Molinette Hospital in Turin, as well as centers in Brescia and Naples.
+
 ```{r}
-summary(merged)
 table(merged$CENTRO)
 ```
 
 The overall cohort includes 61 patients, of whom 31 are treated with dimethyl fumarate (Tecfidera) and 30 with cladribine (Mavenclad).
 ```{r}
-table(merged$GROUP)
+table(merged$therapy)
 ```
 Regarding sex distribution, 21 patients are male and 39 are female, showing a predominance of females within the cohort.
 ```{r}
 table(merged$sex, useNA = "ifany")
-```
 
-The age distribution at treatment initiation is approximately symmetrical, with most patients between 35 and 55 years. Although Tecfidera patients are slightly older on average, the difference is not statistically significant (p = 0.19), and both groups show comparable variability and age range, reflecting a representative adult multiple sclerosis population.
-```{r}
 #% of sex distribution
-ggplot(merged, aes(x = sex, fill = sex)) +
-  geom_bar(aes(y = after_stat(prop), group = GROUP)) +
-  facet_wrap(~ GROUP) +
-  scale_y_continuous(labels = scales::percent) +
+ggplot(sex_prop, aes(x = GROUP, y = percent, fill = sex)) +
+geom_col(position = "dodge") +
+  geom_text(
+    aes(label = scales::percent(percent)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 4
+  ) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_fill_manual(values = c(
+    "F" = "#E07A73",
+    "M" = "#4DB6B3"
+  )) +
+  labs(
+    title = "Sex distribution by treatment group",
+    x = "Treatment group",
+    y = "Percentage",
+    fill = "Sex"
+  ) +
   theme_minimal()
 
 
+
+
+```
+## Age distribution in the study cohort
+The age distribution at treatment initiation is approximately symmetrical, with most patients between 35 and 55 years. Although Tecfidera patients are slightly older on average, the difference is not statistically significant (p = 0.19), and both groups show comparable variability and age range, reflecting a representative adult multiple sclerosis population.
+```{r}
 #age distribution
 ggplot(merged, aes(x = age)) +
   geom_histogram(bins = 20, fill = "steelblue", alpha = 0.7) +
   geom_density(aes(y = after_stat(count)), color = "darkblue") +
   geom_vline(aes(xintercept = median(age, na.rm = TRUE)),
-             color = "red", linetype = "dashed", size = 1) +
+             color = "red", linetype = "dashed", linewidth = 1) +
   geom_vline(aes(xintercept = mean(age, na.rm = TRUE)),
-             color = "green", linetype = "dotted", size = 1) +
+             color = "green", linetype = "dotted", linewidth = 1) +
   theme_minimal()
 
 #age distribution between TEC and MAV
-ggplot(merged, aes(x = GROUP, y = age)) +
+ggplot(merged %>% filter(!is.na(age)), aes(x = GROUP, y = age)) +
   geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
   geom_boxplot(width = 0.2, outlier.shape = NA) +
   geom_jitter(width = 0.15, alpha = 0.4) +
-  stat_summary(fun = mean, geom = "point",
-               shape = 18, size = 3, color = "red") +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    shape = 18,
+    size = 3,
+    color = "red"
+  ) +
   stat_compare_means(
-    method = "wilcox.test",   
-    label = "p.format"        
+    method = "wilcox.test",
+    label = "p.format"
   ) +
   theme_minimal() +
   labs(
-    title = "Distribuzione dell'età all'inizio della terapia",
-    x = "Terapia",
-    y = "Età (anni)"
+    title = "Age distribution at baseline",
+    x = "Treatment group",
+    y = "Age (years)"
   )
+
 ```
 
 ## Age at diagnosis in the study cohort
@@ -94,7 +181,7 @@ merged %>%
 No statistically significant difference was observed between the two groups (p = 0.2), indicating comparable age at diagnosis.
 ```{r}
 #Age at diagnosis by treatment group
-ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
+ggplot(merged %>% filter(!is.na(age_at_diagnosis)), aes(x = GROUP, y = age_at_diagnosis)) +
   geom_violin(fill = "lightblue", alpha = 0.3, color = NA) +
   geom_boxplot(width = 0.2, outlier.shape = NA) +
   geom_jitter(width = 0.15, alpha = 0.4) +
@@ -111,50 +198,21 @@ ggplot(merged, aes(x = GROUP, y = age_at_diagnosis)) +
   ) +
   theme_minimal() +
   labs(
-    title = "Distribuzione dell'età alla diagnosi",
-    x = "Terapia",
-    y = "Età (anni)"
+    title = "Age distribution at diagnosis",
+    x = "Treatment group",
+    y = "Age (years)"
   )
 
-```
-
-##A longitudinal version of the dataset (edss_long) was derived from the main dataset (merged) to analyze EDSS trajectories over time + insertion of column GROUP + dataset lesion_prop
-```{r, echo= FALSE}
-#EDSS_long
-edss_long <- merged %>%
-  pivot_longer(
-    cols = starts_with("EDSS_T"),
-    names_to = "timepoint",
-    values_to = "EDSS"
-  ) %>%
-  mutate(
-    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
-    trattamento = ifelse(grepl("TEC", ID),
-                         "Tecfidera",
-                         "Mavenclad"))
-edss_long <- edss_long %>%
-  mutate(farmaco = case_when(
-    grepl("^MAV", ID) ~ "MAV",
-    grepl("^TEC", ID) ~ "TEC"
-  ))
-#GROUP
-merged <- merged %>%
-  mutate(
-    GROUP = str_extract(ID, "^[A-Z]+")
-  ) 
-#lesion_prop
-lesioni_prop <- lesioni_long %>%
-  group_by(terapia, mesi) %>%
-  summarise(
-    prop_lesioni = mean(lesioni == 1, na.rm = TRUE),
-    .groups = "drop")
 ```
 
 ##Baseline EDSS focus
 At baseline, EDSS values were predominantly within the mild–moderate disability range. The distribution differed between treatment groups, with the TEC group showing lower and more concentrated values, while the MAV group appeared more heterogeneous and slightly shifted toward higher EDSS scores. These differences were confirmed by boxplot analysis, which showed a significantly higher baseline EDSS in the MAV group compared to the TEC group (p = 0.006).
 ```{r}
 #density plot
-ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
+ggplot(
+merged %>%
+    filter(!is.na(EDSS_T0), !is.na(age_at_diagnosis))
+, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
   geom_density(alpha = 0.3, linewidth = 1) +
    geom_vline(
     data = stats_EDSS_baseline,
@@ -165,7 +223,7 @@ ggplot(merged, aes(x = EDSS_T0, color = GROUP, fill = GROUP)) +
   theme_minimal()
 
 #boxplot+jitter plot
-ggplot(merged, aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
+ggplot(merged %>% filter(!is.na(EDSS_T0)), aes(x = GROUP, y = EDSS_T0, fill = GROUP)) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA, width = 0.6) +
   geom_jitter(width = 0.12, alpha = 0.4, size = 2, color = "black") +
   stat_compare_means(
@@ -243,19 +301,12 @@ ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
   theme_minimal()
 ```
 
-#Longitudinal analysis: statistical modeling
-A linear mixed-effects model showed a significant treatment effect (lower EDSS in TEC vs MAV), confirming values appreciated at baseline, and a significant interaction between time and treatment, indicating different longitudinal trajectories between groups.
-```{r}
-model3 <- lmer(EDSS ~ mesi * farmaco + (1 | ID), data = edss_long)
-summary(model3)
-```
-
 ##Disease evolution: lesion activity over time by treatment
 The proportion of patients with new lesions was consistently higher in the MAV group compared to TEC, with a peak at 30 months. Lower activity was observed in the TEC group, although late timepoints should be interpreted with caution due to reduced sample size.
 
 ```{r}
 ggplot(lesioni_prop, aes(x = mesi, y = prop_lesioni, color = terapia)) +
-  geom_line(size = 1.1) +
+  geom_line(linewidth = 1.1) +
   geom_point(size = 2) +
   scale_y_continuous(labels = scales::percent) +
   labs(
