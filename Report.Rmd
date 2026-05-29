@@ -277,12 +277,14 @@ ggplot(merged, aes(x = factor(lesion_burden), y = EDSS_T0)) +
     title = "Baseline EDSS by lesion burden"
   ) +
   theme_minimal()
+```
 
+```{r, echo=FALSE}
 wilcox.test(
   EDSS_T0 ~ lesion_burden,
   data = merged)
-
 ```
+
 Patients with gadolinium-enhancing lesions showed higher EDSS values, although this difference did not reach statistical significance (p = 0.165).
 No significant correlations were found between EDSS and age at treatment initiation or age at diagnosis.
 ```{r}
@@ -294,7 +296,9 @@ ggplot(merged, aes(x = factor(gadolinium_contrast), y = EDSS_T0)) +
     title = "Baseline EDSS and gadolinium-enhancing MRI findings"
   ) +
   theme_minimal()
+```
 
+```{r, echo=FALSE}
 wilcox.test(
   EDSS_T0 ~ gadolinium_contrast,
   data = merged
@@ -321,8 +325,9 @@ ggplot(merged %>% filter(!is.na(smoking_habit)),
     legend.position = "none",
     plot.title = element_text(face = "bold")
   )
+```
 
-
+```{r, echo=FALSE}
 wilcox.test(
   EDSS_T0 ~ smoking_habit,
   data = merged
@@ -330,7 +335,7 @@ wilcox.test(
 ```
 
 ##Physiscal activity and baseline EDSS
-Baseline EDSS differed significantly across levels of physical activity (p = 0.006). Lower EDSS values were observed in more physically active patients, suggesting an inverse association between physical activity and disability.
+Baseline EDSS differed significantly across levels of physical activity (p = 0.006). Lower EDSS values were observed in more physically active patients, suggesting an inverse association between physical activity and disability, although causality cannot be inferred.
 ```{r}
 ggplot(merged %>% filter(!is.na(physical_activity)),
        aes(x = physical_activity, y = EDSS_T0, fill = physical_activity)) +
@@ -347,10 +352,26 @@ ggplot(merged %>% filter(!is.na(physical_activity)),
   theme(
     legend.position = "none",
     plot.title = element_text(face = "bold")
-  )
 
+    )
+```
+
+```{r, echo=FALSE}
 kruskal.test(
   EDSS_T0 ~ physical_activity,
   data = merged
 )
 ```
+
+
+## Conclusion
+
+EDSS evolution over time showed variability between treatment groups without a clear overall progression. Baseline disability was associated with lesion burden and physical activity, while no clear associations were observed for other factors. These findings should be interpreted with caution due to the observational design.
+
+
+
+
+
+
+
+
