@@ -340,6 +340,38 @@ wilcox.test(delta_EDSS_12 ~ GROUP, data = merged)
 #####
 
 ######distribuzione del sesso#####
+
+#nel report 
+sex_prop <- merged %>%
+  filter(!is.na(sex)) %>%
+  group_by(GROUP, sex) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(GROUP) %>%
+  mutate(percent = n / sum(n))
+#nel report
+ggplot(sex_prop, aes(x = GROUP, y = percent, fill = sex)) +
+geom_col(position = "dodge") +
+  geom_text(
+    aes(label = scales::percent(percent)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 4
+  ) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_fill_manual(values = c(
+    "F" = "#E07A73",
+    "M" = "#4DB6B3"
+  )) +
+  labs(
+    title = "Sex distribution by treatment group",
+    x = "Treatment group",
+    y = "Percentage",
+    fill = "Sex"
+  ) +
+  theme_minimal()
+
+
+
 ggplot(merged, aes(x = sex)) +
   geom_bar(fill = "purple", color = "black") +
   labs(
@@ -537,6 +569,19 @@ summary(model3)
 
 
 ####andamento delle lesioni in TEC e MAV####
+#per creare lesioni_long
+lesioni_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("lesioni_"),
+    names_to = "mesi",
+    values_to = "lesioni"
+  ) %>%
+  mutate(
+    mesi = str_remove(mesi, "lesioni_T"),   
+    mesi = as.numeric(mesi),
+    terapia = GROUP
+  )
+#creazione lesioni_prop
 lesioni_prop <- lesioni_long %>%
   group_by(terapia, mesi) %>%
   summarise(
