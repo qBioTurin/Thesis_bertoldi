@@ -369,7 +369,7 @@ geom_col(position = "dodge") +
     fill = "Sex"
   ) +
   theme_minimal()
-
+git
 
 
 ggplot(merged, aes(x = sex)) +
@@ -865,7 +865,6 @@ fisher.test(table(merged$smoking_habit, merged$lesion_burden))
 
 
 #Modello lineare misto
-
 edss_long <- merged %>%
   pivot_longer(
     cols = starts_with("EDSS_T"),
@@ -915,4 +914,58 @@ model_tx <- lmer(
 summary(model_tx)
 
 #####
+
+
+
+#####
+#TABELLA SUMMARY 
+
+N <- nrow(merged)
+
+tab <- merged %>%
+  select(
+    GROUP,
+    age,
+    sex,
+    bmi,
+    EDSS_T0,
+    EDSS_T6,
+    EDSS_T12,
+    EDSS_T18,
+    EDSS_T24,
+    EDSS_T30,
+    EDSS_T36,
+    relapse_T6,
+    relapse_T12,
+    relapse_T18,
+    relapse_T24,
+    relapse_T30,
+    relapse_T36,
+    naive,
+    disease_activity,
+    lesion_burden,
+    smoking_habit,
+    physical_activity,
+    therapy
+  ) %>%
+  tbl_summary(
+    by = GROUP,
+    statistic = all_continuous() ~ "{mean} ± {sd}",
+    type = list(
+      EDSS_T0 ~ "continuous",
+      EDSS_T6  ~ "continuous",
+      EDSS_T12 ~ "continuous",
+      EDSS_T18 ~ "continuous",
+      EDSS_T24 ~ "continuous",
+      EDSS_T30 ~ "continuous",
+      EDSS_T36 ~ "continuous"
+    )
+  ) %>%
+  add_overall() %>%
+  modify_header(stat_0 = paste0("**All (", N, ")**")) %>%
+  bold_labels()
+
+#####
+
+
 
