@@ -44,6 +44,12 @@ edss_long <- edss_long %>%
     grepl("^MAV", ID) ~ "MAV",
     grepl("^TEC", ID) ~ "TEC"
   ))
+#counts 
+counts <- edss_long %>%
+  group_by(mesi) %>%
+  summarise(n = sum(!is.na(EDSS)))
+
+edss_long <- merge(edss_long, counts, by = "mesi")
 
 #lesion_long and lesioni_prop
 lesioni_long <- merged %>%
@@ -81,11 +87,11 @@ A study is currently being conducted involving patients affected by multiple scl
 table(merged$CENTRO)
 ```
 
-The overall cohort includes 61 patients, of whom 31 are treated with dimethyl fumarate (Tecfidera) and 30 with cladribine (Mavenclad).
+The overall cohort includes 61 patients, of whom 32 are treated with dimethyl fumarate (Tecfidera) and 30 with cladribine (Mavenclad).
 ```{r}
 table(merged$therapy)
 ```
-Regarding sex distribution, 21 patients are male and 39 are female, showing a predominance of females within the cohort.
+Regarding sex distribution, 22 patients are male and 39 are female, showing a predominance of females within the cohort.
 ```{r}
 table(merged$sex, useNA = "ifany")
 
@@ -251,29 +257,41 @@ ggplot(merged %>% filter(!is.na(EDSS_T0)), aes(x = GROUP, y = EDSS_T0, fill = GR
 EDSS over time shows moderate interindividual variability, with heterogeneous trajectories generally within a mild–moderate range. Mean EDSS remains largely stable, with a slight increase up to around 18–20 months followed by stabilization, suggesting no clear overall progression.
 ```{r}
 ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
-  geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
-  geom_point(alpha = 0.4, size = 1, color = "grey40") +
+geom_line(alpha = 0.20, color = "grey65", linewidth = 0.6) +
+ geom_point(alpha = 0.2, size = 0.5, color = "grey40")+
   stat_summary(
     aes(group = 1),
     fun.data = mean_se,
     geom = "ribbon",
-    fill = "red",
+    fill = "#D55E00",
     alpha = 0.2,
-    color = NA
+    color = "#D55E00"
   ) +
   stat_summary(
     aes(group = 1),
     fun = mean,
     geom = "line",
-    
     color = "red",
-    linewidth = 1.5
+    linewidth = 1.8
+  ) +
+  geom_text(
+    data = counts,
+    aes(x = mesi, y = -0.7, label = paste0("n=", n)),
+    size = 3,
+    color= "grey20",
+    inherit.aes = FALSE
   ) +
   labs(
     title = "EDSS evolution over time",
     subtitle = "grey: patients | red: mean ± SE",
-    x = "Months",
+    x = "Months (number below= n)",
     y = "EDSS"
+  ) +
+  coord_cartesian(
+    ylim = c(-0.5, max(edss_long$EDSS, na.rm = TRUE))
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 24, 30, 36)
   ) +
   theme_minimal(base_size = 13)
 
@@ -300,7 +318,110 @@ ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
   ) +
   theme_minimal()
 ```
+#EDSS Trends in Relation to Relapse
+EDSS values show considerable variability across all time points, but no clear or consistent change is observed at the time of relapse. Overall, the pattern suggests that EDSS does not strongly track the occurrence of relapse in this dataset.
 
+```{r}
+#setup
+first_relapse <- relapse_long %>%
+  filter(relapse == 1) %>%
+  group_by(ID) %>%
+  summarise(relapse_time = min(mesi), .groups = "drop")
+
+data_rel <- edss_long %>%
+  left_join(first_relapse, by = "ID") %>%
+  filter(!is.na(relapse_time)) %>%
+  mutate(time_from_relapse = mesi - relapse_time)
+
+
+data_rel_trim <- data_rel %>%
+  filter(time_from_relapse >= -12 & time_from_relapse <= 12)
+  
+data_rel2 <- data_rel %>%
+  mutate(period = case_when(
+    time_from_relapse < 0 ~ "Before relapse",
+    time_from_relapse == 0 ~ "At relapse",
+    time_from_relapse > 0 ~ "After relapse"
+  ))
+ 
+
+
+#plot 
+
+ggplot(data_rel2 %>% filter(!is.na(EDSS)),
+       aes(x = period, y = EDSS, fill = farmaco)) +
+  geom_boxplot(
+    alpha = 0.7,
+    position = position_dodge(width = 0.8)
+  ) +
+  geom_jitter(
+    aes(color = farmaco),
+    alpha = 0.5,
+    position = position_jitterdodge(
+      jitter.width = 0.1,
+      dodge.width = 0.8
+    )
+  ) +
+  labs(
+    x = "",
+    y = "EDSS",
+    
+    title = "EDSS Before and After Relapse by Treatment"
+  ) +
+  scale_fill_manual(values = c("TEC" = "#4DBBD5", "MAV" = "#E64B35")) +
+  scale_color_manual(values = c("TEC" = "#4DBBD5", "MAV" = "#E64B35")) +
+  
+  theme_minimal(base_size = 14)
+  
+```
+
+#Time to First Relapse by Treatment
+Kaplan–Meier curves showed a non-significant trend toward a lower risk of relapse in the TEC group compared with MAV (log-rank p = 0.18), with overall high relapse-free survival in both groups due to the low number of events.
+```{r}
+surv_data_relapse <- relapse_long %>%
+  arrange(ID, mesi) %>%
+  group_by(ID, farmaco) %>%
+  summarise(
+    # verifica se esiste almeno un relapse
+    has_event = any(relapse == 1, na.rm = TRUE),
+    
+    # verifica se il paziente ha almeno un dato valido
+    has_data = any(!is.na(relapse)),
+    
+    time = case_when(
+      has_event ~ min(mesi[relapse == 1], na.rm = TRUE),
+      has_data ~ max(mesi[!is.na(relapse)], na.rm = TRUE),
+      TRUE ~ max(mesi, na.rm = TRUE)  # completamente NA
+    ),
+    
+    event = ifelse(has_event, 1, 0),
+    .groups = "drop"
+  )
+
+
+fit <- survfit(Surv(time, event) ~ farmaco, data = surv_data_relapse)
+
+ggsurvplot(
+  fit,
+  data = surv_data_relapse,
+  pval = TRUE,
+  pval.method = FALSE,
+  pval.coord = c(20, 0.2),
+  risk.table = TRUE,
+  risk.table.height = 0.3,
+  risk.table.fontsize = 3, 
+  tables.theme = theme_cleantable(),
+  break.time.by = 6,
+  conf.int = FALSE,
+  xlab = "Time (months)",
+  ylab = "Probability of no relapse",
+  legend.title = "Treatment",
+  legend.labs = c("MAV", "TEC"),
+  title = "Time to First Relapse",
+  palette = c("#E64B35", "#4DBBD5")
+)
+
+```
 ##Disease evolution: lesion activity over time by treatment
 The proportion of patients with new lesions was consistently higher in the MAV group compared to TEC, with a peak at 30 months. Lower activity was observed in the TEC group, although late timepoints should be interpreted with caution due to reduced sample size.
 
@@ -320,14 +441,37 @@ ggplot(lesioni_prop, aes(x = mesi, y = prop_lesioni, color = terapia)) +
 ## Exploratory analysis: factors associated with baseline EDSS
 An exploratory analysis was conducted to assess factors associated with baseline EDSS. A significant association was observed between lesion burden and EDSS, with higher lesion load corresponding to increased disability (p = 0.015).
 ```{r}
+#setup
+na_counts_lesion <- merged %>%
+  group_by(lesion_burden) %>%
+  summarise(
+    n_NA = sum(is.na(EDSS_T0)),
+    y_pos = max(EDSS_T0, na.rm = TRUE) + 1.5
+  )
+
+#plot
 ggplot(merged, aes(x = factor(lesion_burden), y = EDSS_T0)) +
-  geom_boxplot() +
+  geom_violin(trim = FALSE, fill = "grey80", color = "black") +
+  geom_boxplot(width = 0.1, outlier.shape = NA) +
+  geom_jitter(width = 0.1, alpha = 0.5, size = 1) +
+  
+  geom_text(
+    data = na_counts_lesion,
+    aes(x = factor(lesion_burden), y = y_pos,
+        label = paste0("NA: ", n_NA)),
+    inherit.aes = FALSE,
+    
+    size = 3,
+    vjust = 0
+  ) +
+  
   labs(
     x = "Lesion Burden (T0)",
     y = "EDSS T0",
     title = "Baseline EDSS by lesion burden"
   ) +
   theme_minimal()
+
 ```
 
 ```{r, echo=FALSE}
