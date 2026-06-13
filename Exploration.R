@@ -928,19 +928,8 @@ tab <- merged %>%
     age,
     sex,
     bmi,
-    EDSS_T0,
-    EDSS_T6,
-    EDSS_T12,
-    EDSS_T18,
-    EDSS_T24,
-    EDSS_T30,
-    EDSS_T36,
-    relapse_T6,
-    relapse_T12,
-    relapse_T18,
-    relapse_T24,
-    relapse_T30,
-    relapse_T36,
+    starts_with("EDSS_"),
+    starts_with("relapse_"),
     naive,
     disease_activity,
     lesion_burden,
@@ -948,24 +937,450 @@ tab <- merged %>%
     physical_activity,
     therapy
   ) %>%
-  tbl_summary(
-    by = GROUP,
-    statistic = all_continuous() ~ "{mean} ± {sd}",
-    type = list(
-      EDSS_T0 ~ "continuous",
-      EDSS_T6  ~ "continuous",
-      EDSS_T12 ~ "continuous",
-      EDSS_T18 ~ "continuous",
-      EDSS_T24 ~ "continuous",
-      EDSS_T30 ~ "continuous",
-      EDSS_T36 ~ "continuous"
-    )
+  tbl_summary( by = GROUP, 
+                 statistic = list(
+                 all_continuous() ~ "{mean} ± {sd}",
+                 starts_with("EDSS_") ~ "{median} ({p25}, {p75})",
+                 all_categorical() ~ "{n} ({p}%)"
+               ),
+               label = list(
+                 # EDSS
+                 EDSS_T0  ~ "T0",
+                 EDSS_T6  ~ "T6",
+                 EDSS_T12 ~ "T12",
+                 EDSS_T18 ~ "T18",
+                 EDSS_T24 ~ "T24",
+                 EDSS_T30 ~ "T30",
+                 EDSS_T36 ~ "T36",
+                 
+                 # RELAPSE
+                 relapse_T6  ~ "T6",
+                 relapse_T12 ~ "T12",
+                 relapse_T18 ~ "T18",
+                 relapse_T24 ~ "T24",
+                 relapse_T30 ~ "T30",
+                 relapse_T36 ~ "T36", 
+                 smoking_habit ~ "Smokers"
+               ),
+               missing_text = "Missing values"
   ) %>%
   add_overall() %>%
-  modify_header(stat_0 = paste0("**All (", N, ")**")) %>%
-  bold_labels()
+  bold_labels() %>%
+  # ✅ intestazione EDSS
+  modify_table_body(
+    ~ .x %>%
+      dplyr::add_row(
+        label = "**EDSS**",
+        .before = which(.x$variable == "EDSS_T0")
+      )
+  ) %>%
+  
+  # ✅ intestazione RELAPSE
+  modify_table_body(
+    ~ .x %>%
+      dplyr::add_row(
+        label = "**Relapse**",
+        .before = which(.x$variable == "relapse_T6")
+      )
+  )%>%
+  
+  modify_header(label = "**Variables**")%>%
+
+
+add_p(
+  test = list(
+    age ~ "wilcox.test",
+    bmi ~ "wilcox.test",
+    starts_with("EDSS_") ~ "wilcox.test",
+    all_categorical() ~ "fisher.test"
+  ), 
+  pvalue_fun = ~style_pvalue(.x, digits = 3)
+)
+
+tab
 
 #####
 
 
 
+
+##### correzioni del report ####
+
+counts <- edss_long %>%
+  group_by(mesi) %>%
+  summarise(n = sum(!is.na(EDSS)))
+
+
+edss_long <- merge(edss_long, counts, by = "mesi")
+
+ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
+geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
+  geom_point(alpha = 0.4, size = 1, color = "grey40") +
+  stat_summary(
+    aes(group = 1),
+    fun.data = mean_se,
+    geom = "ribbon",
+    fill = "red",
+    alpha = 0.2,
+    color = NA
+  ) +
+  stat_summary(
+    aes(group = 1),
+    fun = mean,
+    geom = "line",
+    color = "red",
+    linewidth = 1.5
+  ) +
+  geom_text(
+    data = counts,
+    aes(x = mesi, y = -0.4, label = paste0("n=", n)),
+    size = 3,
+    inherit.aes = FALSE
+  ) +
+  labs(
+    title = "EDSS evolution over time",
+    subtitle = "grey: patients | red: mean ± SE",
+    x = "Months",
+    y = "EDSS"
+  ) +
+  coord_cartesian(
+    ylim = c(-0.5, max(edss_long$EDSS, na.rm = TRUE))
+  ) +
+  theme_minimal(base_size = 13)
+
+#ALTERNATIVA n=SPESSORE
+#necessario dare a counts edss_means
+counts <- edss_long %>%
+  dplyr::group_by(mesi) %>%
+  dplyr::summarise(
+    n = sum(!is.na(EDSS)),
+    mean_EDSS = mean(EDSS, na.rm = TRUE)
+  )
+
+
+ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
+  geom_line(alpha = 0.12, color = "grey65", linewidth = 0.5) +
+  geom_line(
+    data = counts,
+    aes(x = mesi, y = mean_EDSS, size = n, group=1),
+    color = "#D55E00",
+    inherit.aes = FALSE
+  ) +
+  scale_size(range = c(0.5, 2.5), guide = "none") +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 24, 30, 36),
+    limits = c(0, 36)
+  ) +
+  coord_cartesian(ylim = c(0, 7)) +
+labs(
+  title = "EDSS evolution over time",
+  subtitle = "Grey: patients | orange: mean (thickness = n)",
+  x = "Months",
+  y = "EDSS"
+) +
+  theme_minimal(base_size = 13)
+
+counts <- edss_long %>%
+  dplyr::group_by(mesi) %>%
+  dplyr::summarise(
+    n = sum(!is.na(EDSS)),
+    mean_EDSS = mean(EDSS, na.rm = TRUE)
+  )
+
+
+
+###RELAPSE in formato long per sovrapposizione
+
+relapse_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("relapse_T"),
+    names_to = "timepoint",
+    values_to = "relapse"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("relapse_T", "", timepoint)),
+    farmaco = case_when(
+      grepl("^MAV", ID) ~ "MAV",
+      grepl("^TEC", ID) ~ "TEC"
+    )
+  )
+
+relapse_counts <- relapse_long %>%
+  group_by(mesi, farmaco) %>%
+  summarise(n_relapse = sum(relapse == 1), .groups = "drop")
+
+
+relapse_events <- relapse_long %>%
+  dplyr::filter(relapse == 1)
+
+
+
+#SURVIVAL PLOT
+surv_data_relapse <- relapse_long %>%
+  arrange(ID, mesi) %>%
+  group_by(ID, farmaco) %>%
+  summarise(
+    # verifica se esiste almeno un relapse
+    has_event = any(relapse == 1, na.rm = TRUE),
+    
+    # verifica se il paziente ha almeno un dato valido
+    has_data = any(!is.na(relapse)),
+    
+    time = case_when(
+      has_event ~ min(mesi[relapse == 1], na.rm = TRUE),
+      has_data ~ max(mesi[!is.na(relapse)], na.rm = TRUE),
+      TRUE ~ max(mesi, na.rm = TRUE)  # completamente NA
+    ),
+    
+    event = ifelse(has_event, 1, 0),
+    .groups = "drop"
+  )
+
+
+fit <- survfit(Surv(time, event) ~ farmaco, data = surv_data_relapse)
+
+ggsurvplot(
+  fit,
+  data = surv_data_relapse,
+  pval = TRUE,
+  pval.method = FALSE,
+  pval.coord = c(20, 0.2),
+  risk.table = TRUE,
+  risk.table.height = 0.3,
+  risk.table.fontsize = 3, 
+  tables.theme = theme_cleantable(),
+  break.time.by = 6,
+  conf.int = FALSE,
+  xlab = "Time (months)",
+  ylab = "Probability of no relapse",
+  legend.title = "Treatment",
+  legend.labs = c("MAV", "TEC"),
+  title = "Time to First Relapse",
+  palette = c("#E64B35", "#4DBBD5")
+)
+
+
+#tentativo 1: grafico con rug 
+ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
+  stat_summary(
+    fun = median,
+    geom = "line",
+    linewidth = 1.3
+  ) +
+  stat_summary(
+    fun = median,
+    geom = "point",
+    size = 3
+  ) +
+  geom_rug(
+    data = relapse_events,
+    aes(x = mesi, color = farmaco),
+    inherit.aes = FALSE,
+    sides = "b",
+    alpha = 0.7
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 24, 30, 36)
+  ) +
+  coord_cartesian(ylim = c(0.8, 1.6)) +
+  labs(
+    title = "Median EDSS over time by treatment",
+    subtitle = "Rug = relapse events",
+    x = "Months of follow-up",
+    y = "EDSS",
+    color = "Treatment"
+  ) +
+  
+  theme_minimal()
+
+
+
+#tentativo 2 (mix di plot)
+p1 <- ggplot(edss_long, aes(x = mesi, y = EDSS, color = farmaco)) +
+  stat_summary(fun = median, geom = "line", linewidth = 1.3) +
+  stat_summary(fun = median, geom = "point", size = 3) +
+  scale_x_continuous(breaks = c(0,6,12,18,24,30,36), limits = c(0,36))+ 
+  labs(y = "EDSS", x = NULL) +
+  theme_minimal()
+
+# relapse aggregati
+
+relapse_counts <- relapse_long %>%
+  dplyr::group_by(mesi, farmaco) %>%
+  dplyr::summarise(
+    n = sum(relapse == 1, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  complete(
+    mesi = c(0, 6, 12, 18, 24, 30, 36),
+    farmaco,
+    fill = list(n = 0)
+  )
+
+
+
+
+p2 <- ggplot(relapse_counts,
+             aes(x = mesi, y = n, fill = farmaco)) +
+  geom_col(
+    position = "dodge",
+    alpha = 0.7
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(relapse_counts$n, na.rm = TRUE) + 1)
+  ) +
+  scale_x_continuous(
+    breaks = c(0, 6, 12, 18, 24, 30, 36)
+  ) +
+  labs(
+    y = "Relapses",
+    x = "Months"
+  ) +
+  theme_minimal()
+
+p1 / p2
+
+#tentativo 3:EDSS prima e dopo un relapse
+
+first_relapse <- relapse_long %>%
+  filter(relapse == 1) %>%
+  group_by(ID) %>%
+  summarise(relapse_time = min(mesi), .groups = "drop")
+
+data_rel <- edss_long %>%
+  left_join(first_relapse, by = "ID") %>%
+  filter(!is.na(relapse_time)) %>%
+  mutate(time_from_relapse = mesi - relapse_time)
+
+
+data_rel_trim <- data_rel %>%
+  filter(time_from_relapse >= -12 & time_from_relapse <= 12)
+
+#plot con range totale
+ggplot(data_rel, aes(x = time_from_relapse, y = EDSS)) +
+  # media
+  stat_summary(fun = mean, geom = "line", color = "#E64B35", linewidth = 1.3) +
+  stat_summary(fun = mean, geom = "point", color = "#E64B35", size = 2) +
+  # errore
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 1) +
+  # linea verticale = relapse
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  labs(
+    x = "Time from relapse (months)",
+    y = "Mean EDSS",
+    title = "Change in EDSS Around Relapse"
+  ) +
+  theme_minimal(base_size = 14)
+
+
+
+#plot con range piccolo
+ggplot(data_rel_trim, aes(x = time_from_relapse, y = EDSS)) +
+  
+  # traiettorie individuali (trasparenza)
+  geom_line(aes(group = ID), color = "gray", alpha = 0.3) +
+  
+  # media
+  stat_summary(fun = mean, geom = "line", color = "#E64B35", linewidth = 1.3) +
+  stat_summary(fun = mean, geom = "point", color = "#E64B35", size = 2) +
+  
+  # barre di errore (SE)
+  stat_summary(fun.data = mean_se, geom = "errorbar", width = 1) +
+  
+  # linea verticale del relapse
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  
+  labs(
+    x = "Time from relapse (months)",
+    y = "EDSS",
+    title = "EDSS Trajectories Around Relapse (±12 months)"
+  ) +
+  
+  theme_minimal(base_size = 14)
+
+
+#plot piu esplicativo (BOXPLOT)
+data_rel2 <- data_rel %>%
+  mutate(period = case_when(
+    time_from_relapse < 0 ~ "Before relapse",
+    time_from_relapse == 0 ~ "At relapse",
+    time_from_relapse > 0 ~ "After relapse"
+  ))
+
+ggplot(data_rel2, aes(x = period, y = EDSS)) +
+  
+  geom_boxplot(fill = "#4DBBD5", alpha = 0.6) +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  
+  labs(
+    x = "",
+    y = "EDSS",
+    
+    title = "EDSS Before and After Relapse"
+  ) +
+  
+  theme_minimal(base_size = 14)
+
+#plot piu esplicativo x trattamento (BOXPLOT)
+
+ggplot(data_rel2 %>% filter(!is.na(EDSS)),
+       aes(x = period, y = EDSS, fill = farmaco)) +
+  geom_boxplot(
+    alpha = 0.7,
+    position = position_dodge(width = 0.8)
+  ) +
+  geom_jitter(
+    aes(color = farmaco),
+    alpha = 0.5,
+    position = position_jitterdodge(
+      jitter.width = 0.1,
+      dodge.width = 0.8
+    )
+  ) +
+  labs(
+    x = "",
+    y = "EDSS",
+    title = "EDSS Before and After Relapse by Treatment"
+  ) +
+  scale_fill_manual(values = c("TEC" = "#4DBBD5", "MAV" = "#E64B35")) +
+  scale_color_manual(values = c("TEC" = "#4DBBD5", "MAV" = "#E64B35")) +
+  
+  theme_minimal(base_size = 14)
+
+
+
+##### VIOLIN PLOT di "factors associated with baseline EDSS" (lesion burden)
+
+na_counts_lesion <- merged %>%
+  group_by(lesion_burden) %>%
+  summarise(
+    n_NA = sum(is.na(EDSS_T0)),
+    y_pos = max(EDSS_T0, na.rm = TRUE) + 1.5
+  )
+
+
+ggplot(merged, aes(x = factor(lesion_burden), y = EDSS_T0)) +
+  geom_violin(trim = FALSE, fill = "grey80", color = "black") +
+  geom_boxplot(width = 0.1, outlier.shape = NA) +
+  geom_jitter(width = 0.1, alpha = 0.5, size = 1) +
+  
+  geom_text(
+    data = na_counts_lesion,
+    aes(x = factor(lesion_burden), y = y_pos,
+        label = paste0("NA: ", n_NA)),
+    inherit.aes = FALSE,
+    
+    size = 3,
+    vjust = 0
+  ) +
+  
+  labs(
+    x = "Lesion Burden (T0)",
+    y = "EDSS T0",
+    title = "Baseline EDSS by lesion burden"
+  ) +
+  theme_minimal()
+
+    
+
+    
