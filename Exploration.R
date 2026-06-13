@@ -1010,8 +1010,8 @@ counts <- edss_long %>%
   group_by(mesi) %>%
   summarise(n = sum(!is.na(EDSS)))
 
-
 edss_long <- merge(edss_long, counts, by = "mesi")
+
 
 ggplot(edss_long, aes(x = mesi, y = EDSS, group = ID)) +
 geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
@@ -1047,6 +1047,7 @@ geom_line(alpha = 0.25, color = "grey50", linewidth = 0.6) +
     ylim = c(-0.5, max(edss_long$EDSS, na.rm = TRUE))
   ) +
   theme_minimal(base_size = 13)
+
 
 #ALTERNATIVA n=SPESSORE
 #necessario dare a counts edss_means
