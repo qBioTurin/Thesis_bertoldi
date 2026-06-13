@@ -76,6 +76,20 @@ stats_EDSS_baseline <- merged %>%
     mediana = median(EDSS_T0, na.rm = TRUE),
     media = mean(EDSS_T0, na.rm = TRUE)
   )
+#relapse_long
+relapse_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("relapse_T"),
+    names_to = "timepoint",
+    values_to = "relapse"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("relapse_T", "", timepoint)),
+    farmaco = case_when(
+      grepl("^MAV", ID) ~ "MAV",
+      grepl("^TEC", ID) ~ "TEC"
+    )
+  )
 
 ```
 
