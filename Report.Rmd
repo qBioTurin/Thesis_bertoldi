@@ -295,6 +295,12 @@ geom_line(alpha = 0.20, color = "grey65", linewidth = 0.6) +
   ) +
   theme_minimal(base_size = 13)
 
+#### DT: trovare outlier
+unique(edss_long$EDSS)
+edss_long %>% 
+     filter(EDSS == 2025.0) %>% 
+     select(ID, EDSS)
+
 ```
 ##EDSS trends by treatment group
 Median EDSS differed between treatment groups over time, with higher baseline values in the MAV group and relatively stable trajectories in both groups, followed by a decrease at later timepoints. Interpretation of late timepoints should be cautious due to reduced sample size.
