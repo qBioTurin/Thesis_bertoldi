@@ -253,4 +253,3 @@ names(merged_data)[names(merged_data) == "sample_collection_date.y"] <- "sample_
 names(merged_data)[names(merged_data) == "disease_actvity"] <- "disease_activity"
 
 
-
