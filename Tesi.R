@@ -252,4 +252,9 @@ merged_data <- merged_data %>%
 names(merged_data)[names(merged_data) == "sample_collection_date.y"] <- "sample_collection_date"
 names(merged_data)[names(merged_data) == "disease_actvity"] <- "disease_activity"
 
-
+#COMANDO PER SALVARE MERGED_DATA.CSV IN INPUT 
+write.csv(
+  merged_data,
+  "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/merged_data.csv",
+  row.names = FALSE
+)
