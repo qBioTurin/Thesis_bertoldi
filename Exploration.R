@@ -58,6 +58,13 @@ merged$gc_treatment <- factor(merged$gc_treatment,levels = c("positive", "negati
 merged$prognosis_at_onset <- factor(merged$prognosis_at_onset,levels = c("positive", "negative"))
 merged$simplified_batch<- factor (merged$simplified_batch, levels= c("1-3", "4-6"))
 
+##### salvataggio di merged ####
+
+write.csv2(merged,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/merged.csv",
+           row.names = FALSE,
+           fileEncoding = "UTF-8")
+#######
 
 #analisi descrittitva dell'intera coorte
 summary(merged$age)
