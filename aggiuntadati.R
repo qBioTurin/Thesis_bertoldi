@@ -1,9 +1,61 @@
 source("library.R")
 
+#importazione di clean data
+merged <- read.csv("C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/Input/merged_data.csv")
+
+
+#aggiustare variabili
 merged$bmi <- as.numeric(merged$bmi)
 merged$MEDAS <- as.numeric(merged$MEDAS)
+#date da chr
+merged$data_nascita= as.Date(merged$data_nascita, origin= "1899-12-30")
+merged$DATA_ESORDIO        <- as.Date(merged$DATA_ESORDIO, origin = "1899-12-30")
+merged$data_diagnosi       <- as.Date(merged$data_diagnosi, origin = "1899-12-30")
+merged$data_prelievo_T0    <- as.Date(merged$data_prelievo_T0, origin = "1899-12-30")
+merged$data_cambio_terapia <- as.Date(merged$data_cambio_terapia, origin = "1899-12-30")
+merged$data_referto_T6  <- as.Date(merged$data_referto_T6,  origin = "1899-12-30")
+merged$data_referto_T12 <- as.Date(merged$data_referto_T12, origin = "1899-12-30")
+merged$data_referto_T18 <- as.Date(merged$data_referto_T18, origin = "1899-12-30")
+merged$data_referto_T24 <- as.Date(merged$data_referto_T24, origin = "1899-12-30")
+merged$data_referto_T30 <- as.Date(merged$data_referto_T30, origin = "1899-12-30")
+merged$data_referto_T36 <- as.Date(merged$data_referto_T36, origin = "1899-12-30")
+merged$sample_collection_date <- as.Date(merged$sample_collection_date, origin = "1899-12-30")
+merged$glc_date_before_t0 <- as.Date(merged$glc_date_before_t0, origin="1899-12-30")
+#da int a categoriche (relapse, lesion, cambio terapia)
+merged$lesioni_T6 <- factor(merged$lesioni_T6)
+merged$lesioni_T12 <- factor(merged$lesioni_T12)
+merged$lesioni_T18 <- factor(merged$lesioni_T18)
+merged$lesioni_T24 <- factor(merged$lesioni_T24)
+merged$`lesioni_T30` <- factor(merged$`lesioni_T30`)
+merged$`lesioni_T36` <- factor(merged$`lesioni_T36`)
 
-#aggiungo nuovi dati 
+merged$relapse_T6 <- factor(merged$relapse_T6)
+merged$relapse_T12 <- factor(merged$relapse_T12)
+merged$relapse_T18<- factor(merged$relapse_T18)
+merged$relapse_T24 <- factor(merged$relapse_T24)
+merged$relapse_T30 <- factor(merged$relapse_T30)
+merged$relapse_T36 <- factor(merged$relapse_T36)
+
+merged$cambio_terapia<- factor(merged$cambio_terapia)
+
+merged$bone_marrow_lesions <- as.factor(merged$bone_marrow_lesions)
+merged$subtentorial_lesions <- as.factor(merged$subtentorial_lesions)
+merged$gadolinium_contrast <- as.factor(merged$gadolinium_contrast)
+merged$full_recovery <- as.factor(merged$full_recovery)
+
+#da chr a categoriche
+merged$naive <- factor(merged$naive,levels = c("no", "yes"))
+merged$sex <- factor(merged$sex, levels = c("M", "F"))
+merged$smoking_habit <- factor(merged$smoking_habit,levels = c("yes", "no"))
+merged$antibiotic_use <- factor(merged$antibiotic_use,levels = c("yes", "no"))
+merged$spike_in <- factor(merged$spike_in,levels = c("no", "yes"))
+merged$glucocorticoid_treatment <- factor(merged$glucocorticoid_treatment,levels = c("positive", "negative"))
+merged$gc_treatment <- factor(merged$gc_treatment,levels = c("positive", "negative"))
+merged$prognosis_at_onset <- factor(merged$prognosis_at_onset,levels = c("positive", "negative"))
+merged$simplified_batch<- factor (merged$simplified_batch, levels= c("1-3", "4-6"))
+
+
+#aggiungo NUOVI dati 
 merged$EDSS_T12[merged$ID == "MAV23"] <- 1.0 #CAMBIA CONTINUAMENTE
 merged$previous_therapy[merged$ID == "MAV07"] <- "interferon_beta"
 merged$naive[merged$ID == "MAV08"]<- "no"
@@ -59,7 +111,7 @@ merged$EDSS_T0[merged$ID == "MAV31"] <- 2.5
 merged$EDSS_T12[merged$ID == "MAV31"] <- 2.5
 merged$EDSS_T24[merged$ID == "MAV31"] <- 2.5
 merged$glc_date_before_t0[merged$ID == "MAV31"] <-
-merged$lesion_burden[merged$ID == "MAV31"] <- 1
+  merged$lesion_burden[merged$ID == "MAV31"] <- 1
 merged$bone_marrow_lesions[merged$ID == "MAV31"] <- 1
 merged$subtentorial_lesions[merged$ID == "MAV31"] <- 1
 merged$gadolinium_contrast[merged$ID == "MAV31"] <- 0
@@ -195,7 +247,7 @@ merged$relapse_T18[merged$ID == "MAV27"] <- 0
 merged$relapse_T18[merged$ID == "MAV30"] <- NA
 
 
- 
+
 merged$relapse_T24[merged$ID == "MAV05"] <- NA
 merged$relapse_T24[merged$ID == "MAV06"] <- NA
 merged$relapse_T24[merged$ID == "MAV07"] <- NA
@@ -252,7 +304,7 @@ merged$cambio_terapia[merged$ID == "MAV33"] <- 0
 merged$data_cambio_terapia[merged$ID == "MAV29"] <- as.Date("2024-08-01")
 
 merged$NUOVA_TERAPIA[merged$ID== "MAV07"] <- "inizia mavenclad il 4/2/2021"
-  
+
 merged$naive[merged$ID== "MAV15"] <- "no"
 merged$naive[merged$ID== "MAV16"] <- "yes"
 merged$naive[merged$ID== "MAV22"] <- "yes"
@@ -270,9 +322,6 @@ merged$naive[merged$ID== "MAV25"] <- "yes"
 merged$smoking_habit[merged$ID== "MAV31"] <- "no"
 merged$smoking_habit[merged$ID== "MAV32"] <- "yes"
 merged$smoking_habit[merged$ID== "MAV33"] <- "no"
-
-
-
 
 
 
@@ -470,8 +519,8 @@ merged$cortisone_T24[merged$ID == "TEC32"] <-0
 merged$full_recovery[merged$ID == "TEC32"] <- 0
 
 merged$MEDAS [merged$ID == "TEC32"] <- 
-merged$bmi [merged$ID == "TEC32"] <- 
-merged$smoking_habit [merged$ID == "TEC32"] <- ""
+  merged$bmi [merged$ID == "TEC32"] <- 
+  merged$smoking_habit [merged$ID == "TEC32"] <- ""
 merged$physical_activity [merged$ID == "TEC32"] <- ""
 
 merged$lesion_burden[merged$ID == "TEC32"] <- 1
@@ -499,7 +548,7 @@ merged$data_referto_T6[merged$ID == "TEC26"] <- as.Date("2022-02-22")
 merged$relapse_T6[merged$ID == "TEC01"] <- 0
 merged$relapse_T6[merged$ID == "TEC02"] <- 0
 merged$relapse_T6[merged$ID == "TEC03"] <- 0
- 
+
 
 
 merged$MEDAS[60]
@@ -617,10 +666,15 @@ merged <- merged %>%
 
 merged$ID_tmp <- NULL
 
+##### salvataggio di merged
 
+write.csv2(merged,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/merged.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
 
-
-
+#apertura di merged
+merged <- read.csv2("input/merged.csv")
 
 
 
