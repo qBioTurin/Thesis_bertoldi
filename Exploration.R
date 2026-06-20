@@ -1064,7 +1064,7 @@ relapse_events <- relapse_long %>%
 
 
 
-#SURVIVAL PLOT
+#SURVIVAL PLOT x RELAPSE
 surv_data_relapse <- relapse_long %>%
   arrange(ID, mesi) %>%
   group_by(ID, farmaco) %>%
@@ -1107,6 +1107,146 @@ ggsurvplot(
   title = "Time to First Relapse",
   palette = c("#E64B35", "#4DBBD5")
 )
+
+#SURVIVAL PLOT X LESIONS
+
+#lesioni_long_survival
+
+lesioni_long_survival <- merged %>%
+  pivot_longer(
+    cols = starts_with("lesioni_T"),
+    names_to = "timepoint",
+    values_to = "lesioni"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("lesioni_T", "", timepoint)),
+    farmaco = case_when(
+      grepl("^MAV", ID) ~ "MAV",
+      grepl("^TEC", ID) ~ "TEC"
+    )
+  )
+
+
+surv_data_lesioni <- lesioni_long_survival %>%
+  group_by(ID, farmaco) %>%
+  summarise(
+    event = as.integer(any(lesioni == 1, na.rm = TRUE)),
+    
+    time = {
+      if (any(lesioni == 1, na.rm = TRUE)) {
+        min(mesi[lesioni == 1], na.rm = TRUE)
+      } else if (any(!is.na(lesioni))) {
+        max(mesi[!is.na(lesioni)], na.rm = TRUE)
+      } else {
+        NA_real_
+      }
+    },
+    .groups = "drop"
+  )
+
+
+fit_lesioni <- survfit(
+  Surv(time, event) ~ farmaco,
+  data = subset(surv_data_lesioni, !is.na(time))
+)
+
+
+ggsurvplot(
+  fit_lesioni,
+  data = surv_data_lesioni,
+  pval = TRUE,
+  pval.method = FALSE,
+  pval.coord = c(20, 0.2),
+  risk.table = TRUE,
+  risk.table.height = 0.3,
+  risk.table.fontsize = 3,
+  tables.theme = theme_cleantable(),
+  break.time.by = 6,
+  conf.int = FALSE,
+  xlab = "Time (months)",
+  ylab = "Probability of no new lesions",
+  legend.title = "Treatment",
+  legend.labs = c("MAV", "TEC"),
+  title = "Time to First Lesion",
+  palette = c("#E64B35", "#4DBBD5")
+)
+
+
+
+#SURVIVAL PLOT x EDSS
+#edss_long
+edss_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("EDSS_T"),
+    names_to = "timepoint",
+    values_to = "EDSS"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
+    trattamento = ifelse(grepl("TEC", ID),
+                         "Tecfidera",
+                         "Mavenclad"))
+edss_long <- edss_long %>%
+  mutate(farmaco = case_when(
+    grepl("^MAV", ID) ~ "MAV",
+    grepl("^TEC", ID) ~ "TEC"
+  ))
+
+#aggiungo colonna necessaria
+edss_long <- edss_long %>%
+  group_by(ID) %>%
+  mutate(
+    baseline = EDSS[mesi == min(mesi, na.rm = TRUE)]
+  ) %>%
+  ungroup()
+
+
+surv_data_edss <- edss_long %>%
+  group_by(ID, farmaco) %>%
+  summarise(
+    event = as.integer(any(EDSS - baseline >= 1, na.rm = TRUE)),
+    
+    time = {
+      if (any(EDSS - baseline >= 1, na.rm = TRUE)) {
+        min(mesi[EDSS - baseline >= 1], na.rm = TRUE)
+      } else if (any(!is.na(EDSS))) {
+        max(mesi[!is.na(EDSS)], na.rm = TRUE)
+      } else {
+        NA_real_
+      }
+    },
+    
+    .groups = "drop"
+  )
+    
+
+fit_edss <- survfit(
+  Surv(time, event) ~ farmaco,
+  data = subset(surv_data_edss, !is.na(time))
+)
+
+
+
+ggsurvplot(
+  fit_edss,
+  data = subset(surv_data_edss, !is.na(time)),
+  pval = TRUE,
+  pval.coord = c(20, 0.2),
+  risk.table = TRUE,
+  risk.table.height = 0.35,
+  risk.table.fontsize = 2.8,
+  risk.table.y.text = FALSE,
+  break.time.by = 6,
+  conf.int = FALSE,
+  xlab = "Time (months)",
+  ylab = "Probability of no EDSS progression",
+  legend.title = "Treatment",
+  legend.labs = c("MAV", "TEC"),
+  title = "Time to EDSS Progression",
+  palette = c("#E64B35", "#4DBBD5")
+)
+
+
 
 
 #tentativo 1: grafico con rug 
