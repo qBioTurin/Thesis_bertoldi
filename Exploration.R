@@ -1246,7 +1246,218 @@ ggsurvplot(
   palette = c("#E64B35", "#4DBBD5")
 )
 
+#SURVIVAL x NEDA3
+#creazione struttura
 
+#relapse_event
+
+relapse_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("relapse_T"),
+    names_to = "timepoint",
+    values_to = "relapse"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("relapse_T", "", timepoint)),
+    farmaco = case_when(
+      grepl("^MAV", ID) ~ "MAV",
+      grepl("^TEC", ID) ~ "TEC"
+    )
+  )
+
+
+relapse_event <- relapse_long %>%
+  filter(relapse == 1) %>%
+  group_by(ID) %>%
+  summarise(
+    t_relapse = min(mesi),
+    relapse_event = 1,
+    .groups = "drop"
+  )
+
+
+
+all_ids <- relapse_long %>%
+  distinct(ID)
+
+relapse_event <- all_ids %>%
+  left_join(relapse_event, by = "ID")
+
+
+
+relapse_event <- relapse_event %>%
+  mutate(
+    relapse_event = ifelse(is.na(relapse_event), 0, relapse_event)
+  )
+
+#inserisco colonne in merged
+
+merged <- merged %>%
+  left_join(relapse_event, by = "ID")
+
+merged <- merged %>%
+  left_join(surv_data_edss, by = "ID")
+
+
+#surv_data_edss_neda
+edss_long <- merged %>%
+  pivot_longer(
+    cols = starts_with("EDSS_T"),
+    names_to = "timepoint",
+    values_to = "EDSS"
+  ) %>%
+  mutate(
+    mesi = as.numeric(gsub("EDSS_T", "", timepoint)),
+    trattamento = ifelse(grepl("TEC", ID),
+                         "Tecfidera",
+                         "Mavenclad"))
+edss_long <- edss_long %>%
+  mutate(farmaco = case_when(
+    grepl("^MAV", ID) ~ "MAV",
+    grepl("^TEC", ID) ~ "TEC"
+  ))
+
+edss_long_neda <- edss_long %>%
+  group_by(ID) %>%
+  
+  mutate(
+    baseline = EDSS[mesi == min(mesi, na.rm = TRUE)],
+    delta = EDSS - baseline,
+    prog = case_when(
+      baseline == 0 & delta >= 1.5 ~ 1,
+      baseline > 0 & baseline <= 5 & delta >= 1 ~ 1,
+      baseline > 5 & delta >= 0.5 ~ 1,
+      TRUE ~ 0
+    )
+  ) %>%
+  ungroup()
+
+
+surv_data_edss_neda <- edss_long_neda %>%
+  group_by(ID, farmaco) %>%
+  summarise(
+    edss_event = as.integer(any(prog == 1, na.rm = TRUE)),
+    t_edss = if (any(prog == 1, na.rm = TRUE)) {
+      min(mesi[prog == 1], na.rm = TRUE)
+    } else {
+      max(mesi, na.rm = TRUE)
+    },
+    .groups = "drop"
+  )
+
+#mri_event
+
+mri_event <- lesioni_long %>%
+  group_by(ID) %>%
+  summarise(
+    # evento sì/no
+    mri_event = as.integer(any(lesioni == 1, na.rm = TRUE)),
+    
+    # tempo evento (o censura)
+    t_mri = if (any(lesioni == 1, na.rm = TRUE)) {
+      min(mesi[lesioni == 1], na.rm = TRUE)
+    } else {
+      max(mesi, na.rm = TRUE)
+    },
+    
+    .groups = "drop"
+  )
+
+
+#follow-up
+followup <- bind_rows(
+  edss_long %>% select(ID, mesi),
+  relapse_long %>% select(ID, mesi),
+  lesioni_long %>% select(ID, mesi)
+) %>%
+  group_by(ID) %>%
+  summarise(
+    last_followup = max(mesi, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+#neda bozza
+neda_data <- followup %>%
+  left_join(relapse_event, by = "ID") %>%
+  left_join(surv_data_edss_neda, by = "ID") %>%
+  left_join(mri_event, by = "ID")
+
+#includo gadolinium anche se non è long
+neda_data <- neda_data %>%
+  left_join(merged %>% select(ID, gadolinium_contrast), by = "ID")
+
+
+
+
+#NEDA FINALE
+neda_data <- neda_data %>%
+  mutate(
+    # calcolo tempo evento in modo robusto
+    time_event = pmin(
+      coalesce(t_relapse, Inf),
+      coalesce(t_edss, Inf),
+      coalesce(t_mri, Inf)
+    ),
+    # evento globale
+    event = ifelse(
+      relapse_event == 1 |
+        edss_event == 1 |
+        mri_event == 1 |
+        gadolinium_contrast == 1,
+      1, 0
+    ),
+    
+    time = coalesce(
+      ifelse(event == 1, time_event, last_followup),
+      last_followup
+    )
+  )
+
+
+
+neda_data <- neda_data %>%
+  mutate(
+    farmaco = gsub("farmaco=", "", farmaco)
+  )
+neda_data$farmaco <- factor(neda_data$farmaco, levels = c("MAV", "TEC"))
+
+unique(neda_data$farmaco)
+#SURVIVAL NEDA
+
+fit_neda <- survfit(Surv(time, event) ~ farmaco, data = neda_data)
+
+ggsurvplot(fit_neda,
+          conf.int = TRUE,
+          pval = TRUE,
+          
+          palette = c("#1f78b4", "#e31a1c"),
+          size = 1.3,
+          conf.int.alpha = 0.15,
+          
+          xlab = "Months",
+          ylab = "NEDA-3 Probability",
+          title = "NEDA-3 according to Therapy",
+          
+          ggtheme = theme_classic(base_size = 14),
+          
+          
+          
+          risk.table = TRUE,
+          risk.table.height = 0.32,   # ✅ più spazio verticale
+          risk.table.fontsize = 5,    # ✅ numeri più grandi
+          
+          risk.table.y.text = TRUE,
+          risk.table.y.text.col = TRUE,
+          
+          # ✅ questo è fondamentale per separare righe
+          tables.theme = theme_cleantable(),
+          
+          legend.labs = c("MAV", "TEC"),
+          legend.title = "Therapy"
+)
+
+#mettere a posto ordinatamente l'asse x dei mesi, fare combaciare i number at risk con i tempi
+           
 
 
 #tentativo 1: grafico con rug 
