@@ -11,45 +11,40 @@ annot <- read_excel("C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi
 # batch
 batch <- read_excel("C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/metabolome_batch.xlsx")
 
+#modifico e elimina nomi di samples (ctr, new)
+colnames(mat)[colnames(mat) == "RR_old"] <- "ctr_16"
+colnames(mat)[colnames(mat) == "MB_old"] <- "ctr_17"
+colnames(mat)[colnames(mat) == "AM_old"] <- "ctr_15"
 
-#aggiusto valori numerici in mat
-group <- as.character(unlist(mat[1, ]))  # salva gruppi
-mat <- mat[-1, ] #escludi riga 
+mat <- mat[, colnames(mat) != "ctr_15_new...29"]
+mat <- mat[, colnames(mat) != "ctr_15_new...30"]
+mat <- mat[, colnames(mat) != "ctr_15_new...31"]
+mat <- mat[, colnames(mat) != "TEC_02_t0_old"]
+mat <- mat[, colnames(mat) != "TEC_07_t0_old"]
+mat <- mat[, colnames(mat) != "TEC_22_t0_old"]
 
-mat <- as.data.frame(mat)
-rownames(mat) <- mat[,1]
-mat <- mat[,-1]
+colnames(mat)[colnames(mat) == "TEC_07_t0_new"] <- "TEC_07_t0"
+colnames(mat)[colnames(mat) == "TEC_02_t0_new"] <- "TEC_02_t0"
+colnames(mat)[colnames(mat) == "TEC_22_t0_new"] <- "TEC_22_t0"
 
-mat[] <- lapply(mat, function(x) as.numeric(as.character(x)))
+mat_t <- mat %>% #mat_t è la matrice originale MA trasposta 
+  column_to_rownames(var = names(mat)[1]) %>%
+  t() %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "Samples")
 
-#BATCH1
-#qc colonne batch 1
-qc_batch1_cols <- grep("^qc_feci_batch1", colnames(mat), value = TRUE)
+mat_t_clean <- mat_t[mat_t$Labels != "qc", ] #mat__clean è la matrice solo con sani e malati (no qc)
 
-#media qc per ogni metabolita
-qc_mean_batch1 <- rowMeans(mat[, qc_batch1_cols])
-
-
-length(qc_mean_batch1)
-nrow(mat)
-
-#BATCH 2
-qc_batch2_cols <- grep("^qc_feci_batch2", colnames(mat), value = TRUE)
-
-qc_mean_batch2 <- rowMeans(mat[, qc_batch2_cols])
-
-
-#Sostituizione degli 0 in QC
-qc_mean_batch1[qc_mean_batch1 == 0] <- NA
-qc_mean_batch2[qc_mean_batch2 == 0] <- NA
-
-#separazione dei samples dai QC
-mat_samples <- mat[, !colnames(mat) %in% c(qc_batch1_cols, qc_batch2_cols)]
+#salvataggio mat_t (trasposta)
+write.csv2(mat_t,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/mat_t.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
+#apertura di mat_t
+mat_t <- read.csv2("input/mat_t.csv")
 
 
-
-
-#MATCHING NOMI TRA BATCH E MAT_SAMPLES (modifico batch)
+#MATCHING NOMI TRA BATCH E mat_t (senza qc) (modifico batch)
 #ctr
 batch$id <- ifelse(
   grepl("ctrl", batch$id),
@@ -83,7 +78,6 @@ batch$id <- ifelse(
 
 #modifiche id completamente irregolari 
 batch$id[grepl("ctr_34", batch$id)] <- "ctr_34"
-batch$id[batch$id == "ctr_15"] <- "ctr_15_new...29"
 batch$id[batch$id == "MS_3_t0"] <- "MS_3"
 batch$id[batch$id == "MS_4_t0"] <- "MS_4"
 batch$id[batch$id == "MS_5_t0"] <- "MS_5"
@@ -97,49 +91,8 @@ batch$id[batch$id == "MS_24_t0"] <- "MS_24"
 batch$id[batch$id == "MS_25_t0"] <- "MS_25"
 
 
-batch$id[batch$id == "TEC_02_t0"] <- "TEC_02_t0_new"
-batch$id[batch$id == "TEC_07_t0"] <- "TEC_07_t0_new"
-batch$id[batch$id == "TEC_22_t0"] <- "TEC_22_t0_new"
-
-
-
-#inserire samples mancanti in batch 
-nuove_righe <- data.frame(
-  id = c("ctr_15_new...30", "ctr_15_new...31"),
-  batch_metabolomica = c(2, 2)
-)
-
-batch <- rbind(
-  batch[1:42, ],
-  nuove_righe,
-  batch[43:nrow(batch), ]
-)
-
 #controllo matching
 setequal(batch$id, colnames(mat))
-setdiff(batch$id, colnames(mat_samples))
-setdiff(colnames(mat_samples), batch$id)
-
-#CREO DATASET SEPARATI PER SAMPLES-> BATCH1 E SAMPLES->BATCH2
-common <- intersect(batch$id, colnames(mat_samples))
-
-batch1_ids <- common[batch$batch_metabolomica[match(common, batch$id)] == 1]
-batch2_ids <- common[batch$batch_metabolomica[match(common, batch$id)] == 2]
-
-mat_batch1 <- mat_samples[, batch1_ids]
-mat_batch2 <- mat_samples[, batch2_ids]
-
-setdiff(batch$id[batch$batch_metabolomica == 2], colnames(mat_samples))                       
-
-#controllo se combaciano i metaboliti
-length(qc_mean_batch1) == nrow(mat_batch1)
-length(qc_mean_batch2) == nrow(mat_batch2)
-
-#NORMALIZZO SEPARATAMENTE
-mat_batch1_norm <- mat_batch1 / qc_mean_batch1
-mat_batch2_norm <- mat_batch2 / qc_mean_batch2
-
-#ricombino i dataset (le colonne sono distribuite diversamente rispetto a mat_samples)
-mat_samples_norm <- cbind(mat_batch1_norm, mat_batch2_norm)
-
+setdiff(batch$id, colnames(mat_t))
+setdiff(colnames(mat_t), batch$id)
 
