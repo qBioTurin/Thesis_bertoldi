@@ -12,7 +12,14 @@ write.csv2(mat_t,
 #apertura di mat_t
 mat_t <- read.csv2("input/mat_t.csv")
 
+#salvataggio mat_t_filtered (rule 50%)
+write.csv2(mat_t_filtered,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/mat_t_filtered.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
 
+#apertura di mat_t
+mat_t_filtered <- read.csv2("input/mat_t_filtered.csv")
 
 # annotazioni
 annot <- read_excel("C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/metabolome_keyannotation.xlsx")
@@ -136,3 +143,88 @@ mat_t$Therapy[mat_t$Samples== "MS_5"] <- "TEC"
 mat_t$Therapy[mat_t$Samples== "MS_6"] <- "altre terapie"
 mat_t$Therapy[mat_t$Samples== "MS_10_t0"] <- "altre terapie"
 mat_t$Therapy[mat_t$Samples== "MS_9"] <- "altre terapie"
+
+
+
+
+#80% rule: FILTRAGGIO DEI METABOLITI mantengo solo i metaboliti con valori
+#diversi da zero in almeno il 50% di uno dei due gruppi (ctr vs patients)
+
+# Campioni biologici usati SOLO per il calcolo del filtro
+bio <- mat_t %>%
+  filter(Class %in% c("ctr", "patients"))
+
+# Colonne dei metaboliti
+metabolites <- setdiff(names(mat_t),
+                       c("Samples", "Class", "Therapy", "batch_metabolomica"))
+
+# 50% rule
+keep <- sapply(metabolites, function(met) {
+  
+  pct_ctr <- mean(bio[bio$Class == "ctr", met] != 0, na.rm = TRUE)
+  
+  pct_pat <- mean(bio[bio$Class == "patients", met] != 0, na.rm = TRUE)
+  
+  pct_ctr >= 0.50 | pct_pat >= 0.50
+})
+
+# Dataset finale: TUTTI i campioni (compresi i QC)
+mat_t_filtered <- mat_t %>%
+  select(Samples, Class, Therapy, batch_metabolomica,
+         all_of(metabolites[keep]))
+
+# Controllo
+cat("Metaboliti iniziali:", length(metabolites), "\n")
+cat("Metaboliti mantenuti:", sum(keep), "\n")
+cat("Metaboliti rimossi:", sum(!keep), "\n")
+
+table(mat_t_filtered$Class)
+
+
+# Numero di metaboliti rimasti
+ncol(mat_t_filtered) - 4
+
+# Percentuale totale di zeri
+metab <- mat_t_filtered[mat_t_filtered$Class %in% c("ctr", "patients"),
+                        metabolites[keep]]
+100 * sum(metab == 0, na.rm = TRUE) / sum(!is.na(metab))
+
+# Percentuale massima di zeri per ciascun metabolita [RESTITUISCE 76% MA PUO' 
+#ESSERE GIUSTO]
+max(colMeans(metab == 0, na.rm = TRUE) * 100)
+
+#CONTROLLO FINALE
+bio_filtered <- mat_t_filtered %>%
+  filter(Class %in% c("ctr", "patients"))
+
+check <- sapply(metabolites[keep], function(met){
+  
+  pct_ctr <- mean(bio_filtered[bio_filtered$Class == "ctr", met] != 0)
+  
+  pct_pat <- mean(bio_filtered[bio_filtered$Class == "patients", met] != 0)
+  
+  (pct_ctr >= 0.50) | (pct_pat >= 0.50)
+})
+
+table(check)
+
+#DISTRIBUZIONE DEGLI ZERO NEL DATASET FILTRATO
+zero_pct <- colMeans(metab == 0, na.rm = TRUE) * 100
+summary(zero_pct)
+
+hist(zero_pct,
+     breaks = 20,
+     main = "Distribuzione della % di zeri per metabolita",
+     xlab = "% di zeri")
+
+table(cut(zero_pct,
+          breaks = seq(0,100,10)))
+
+
+#apro mat_corrected (mettiti in wd di input)
+mat_corrected <- read.csv(
+  "mat_corrected.csv",
+  header = TRUE,
+  check.names = FALSE
+)
+
