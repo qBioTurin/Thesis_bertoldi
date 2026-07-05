@@ -92,10 +92,12 @@ table(merged$worsening)
 #evento di worsening
 tabella2 <- table(merged$GROUP,
                   merged$worsening)
+table (merged$GROUP,
+       merged$worsening)
 fisher.test(tabella2)
 
 #BARPLOT CON TEST 
-ggplot(merged,
+ggplot(subset (merged,!is.na(andamento_EDSS) & !is.na(GROUP)),
        aes(x = andamento_EDSS,
            fill = GROUP)) +
   
@@ -126,6 +128,7 @@ ggplot(merged,
   ) +
   
   theme_minimal()
+
 
 #GC TREATMENT
 #colonna gc_at_least indica che ha fatto almeno un giorno di cortisone
@@ -468,6 +471,14 @@ ggplot(gc_long2,
 
 #colonna cambio terapia
 #quanti cambiano
+merged <- merged %>%
+  mutate(
+    cambio_terapia = case_when(
+      cambio_terapia == "1" ~ "Yes",
+      cambio_terapia == "0" ~ "No",
+      TRUE ~ NA_character_
+    )
+  )
 table(merged$cambio_terapia)
 
 ggplot(subset(merged, !is.na(cambio_terapia) & !is.na(GROUP)),
@@ -476,8 +487,7 @@ ggplot(subset(merged, !is.na(cambio_terapia) & !is.na(GROUP)),
   labs(
     x = "Therapy change",
     y = "Patients",
-    fill = "GROUP",
-    title = "Therapy change distribution"
+    fill = "GROUP"
   ) +
   theme_minimal()
 
@@ -690,16 +700,16 @@ merged <- merged %>%
   mutate(
     bone_group = case_when(
       GROUP == "MAV" &
-        bone_marrow_lesions == "Yes" ~ "MAV bone +",
+        bone_marrow_lesions == "Yes" ~ "MAV spinal +",
       
       GROUP == "MAV" &
-        bone_marrow_lesions == "No" ~ "MAV bone -",
+        bone_marrow_lesions == "No" ~ "MAV spinal -",
       
       GROUP == "TEC" &
-        bone_marrow_lesions == "Yes" ~ "TEC bone +",
+        bone_marrow_lesions == "Yes" ~ "TEC spinal +",
       
       GROUP == "TEC" &
-        bone_marrow_lesions == "No" ~ "TEC bone -"
+        bone_marrow_lesions == "No" ~ "TEC spinal -"
     )
   )
 
@@ -714,7 +724,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC bone-", "TEC bone+", "MAV bone-", "MAV bone+"),
+  legend.labs = c("TEC spinal-", "TEC spinal+", "MAV spinal-", "MAV spinal+"),
   xlab = "Months",
   ylab = "Event-free survival"
 )
