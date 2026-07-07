@@ -1,7 +1,6 @@
-
 #apertura di merged
 merged <- read.csv2("input/merged.csv")
-#PRIMO QUESITO 
+source("library.R")
 #COLONNA EDSS FINALE
 merged <- merged %>%
   rowwise() %>%
@@ -191,10 +190,10 @@ merged <- merged %>%
     gc = ifelse(gc_treatment == "positive", 1, 0),
     group = GROUP,  # TEC / MAV
     gc_group = case_when(
-      group == "TEC" & gc == 1 ~ "TEC_GC+",
-      group == "TEC" & gc == 0 ~ "TEC_GC-",
       group == "MAV" & gc == 1 ~ "MAV_GC+",
-      group == "MAV" & gc == 0 ~ "MAV_GC-"
+      group == "MAV" & gc == 0 ~ "MAV_GC-",
+      group == "TEC" & gc == 1 ~ "TEC_GC+",
+      group == "TEC" & gc == 0 ~ "TEC_GC-"
     )
   )
 
@@ -238,7 +237,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC GC+", "TEC GC-", "MAV GC+", "MAV GC-"),
+  legend.labs = c("MAV GC+", "MAV GC-", "TEC GC+", "TEC GC-"),
   xlab = "Months",
   ylab = "Event-free survival"
 )
@@ -318,7 +317,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC GC+", "TEC GC-", "MAV GC+", "MAV GC-"),
+  legend.labs = c("MAV GC+", "MAV GC-", "TEC GC+", "TEC GC-"),
   xlab = "Months",
   ylab = "EDSS progression-free survival"
 )
@@ -360,7 +359,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC GC+", "TEC GC-", "MAV GC+", "MAV GC-"),
+  legend.labs = c("MAV GC+", "MAV GC-", "TEC GC+", "TEC GC-"),
   xlab = "Months",
   ylab = "Relapse-free survival"
 )
@@ -405,10 +404,115 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC GC+", "TEC GC-", "MAV GC+", "MAV GC-"),
+  legend.labs = c("MAV GC+", "MAV GC-", "TEC GC+", "TEC GC-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
+
+#LESIONS SURVIVAL SOLO MAV!!!
+dfmav <- dfmav %>%
+  mutate(
+    gc = ifelse(gc_treatment == "positive", 1, 0),
+    group = GROUP,  # TEC / MAV
+    gc_group = case_when(
+      group == "MAV" & gc == 1 ~ "MAV_GC+",
+      group == "MAV" & gc == 0 ~ "MAV_GC-"
+    )
+  )
+
+dfmav <- dfmav %>%
+  mutate(
+    event_6_3   = lesioni_T6  == 1,
+    event_12_3  = lesioni_T12 == 1,
+    event_18_3  = lesioni_T18  == 1,
+    event_24_3  = lesioni_T24  == 1,
+    event_30_3  = lesioni_T30  == 1,
+    event_36_3  = lesioni_T36  == 1
+  )
+
+dfmav <- dfmav %>%
+  mutate(
+    event_time_3 = case_when(
+      event_6_3   ~ 6,
+      event_12_3  ~ 12,
+      event_18_3  ~ 18,
+      event_24_3  ~ 24,
+      event_30_3  ~ 30,
+      event_36_3  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_3 = ifelse(is.na(event_time_3), 0, 1),
+    time_3 = ifelse(is.na(event_time_3), 36, event_time_3)
+  )
+
+surv_obj3 <- Surv(time = dfmav$time_3, event = dfmav$event_status_3)
+fit3 <- survfit(surv_obj3 ~ gc_group, data = dfmav)
+
+ggsurvplot(
+  fit3,
+  data = dfmav,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("MAV GC+", "MAV GC-"),
+  xlab = "Months",
+  ylab = "Lesion-free survival"
+)
+
+
+#solo tec!!!!!
+dftec <- dftec %>%
+  mutate(
+    gc = ifelse(gc_treatment == "positive", 1, 0),
+    group = GROUP,  # TEC / MAV
+    gc_group = case_when(
+      group == "TEC" & gc == 1 ~ "TEC_GC+",
+      group == "TEC" & gc == 0 ~ "TEC_GC-"
+    ))
+
+dftec<- dftec %>%
+  mutate(
+    event_6_3   = lesioni_T6  == 1,
+    event_12_3  = lesioni_T12 == 1,
+    event_18_3  = lesioni_T18  == 1,
+    event_24_3  = lesioni_T24  == 1,
+    event_30_3  = lesioni_T30  == 1,
+    event_36_3  = lesioni_T36  == 1
+  )
+
+dftec <- dftec %>%
+  mutate(
+    event_time_3 = case_when(
+      event_6_3   ~ 6,
+      event_12_3  ~ 12,
+      event_18_3  ~ 18,
+      event_24_3  ~ 24,
+      event_30_3  ~ 30,
+      event_36_3  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_3 = ifelse(is.na(event_time_3), 0, 1),
+    time_3 = ifelse(is.na(event_time_3), 36, event_time_3)
+  )
+
+surv_obj3 <- Surv(time = dftec$time_3, event = dftec$event_status_3)
+fit3 <- survfit(surv_obj3 ~ gc_group, data = dftec)
+
+ggsurvplot(
+  fit3,
+  data = dftec,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("TEC GC+", "TEC GC-"),
+  xlab = "Months",
+  ylab = "Lesion-free survival"
+)
+
 
 
 #CATEGORIE DI DURATA CORTISONE
@@ -796,7 +900,7 @@ ggsurvplot(
   ylab = "EDSS progression-free survival"
 )
 
-#SURVIVALRELAPSE- CAMBIO TERAPIA
+#SURVIVAL RELAPSE- CAMBIO TERAPIA
 surv_obj6 <- Surv(time = merged$time_2, event = merged$event_status_2)
 fit6 <- survfit(surv_obj6 ~ cambio_group, data = merged)
 
@@ -828,7 +932,288 @@ ggsurvplot(
   ylab = "Lesion-free survival"
 )
 
+#SURVIVAL COMPOSITO SOLO MAV
+dfmav <- dfmav %>%
+  mutate(
+    cambio_terapia = case_when(
+      cambio_terapia == "1" ~ "Yes",
+      cambio_terapia == "0" ~ "No",
+      TRUE ~ NA_character_
+    )
+  )
+dfmav <- dfmav %>%
+  mutate(
+    cambio_group = case_when(
+      GROUP == "MAV" &
+        cambio_terapia == "Yes" ~ "MAV cambio +",
+      
+      GROUP == "MAV" &
+        cambio_terapia == "No" ~ "MAV cambio -"))
 
+dfmav <- dfmav %>%
+  mutate(
+    event_6_CT  = (EDSS_T6  - EDSS_T0 >= 0.5) | relapse_T6  == 1 | lesioni_T6  == 1,
+    event_12_CT = (EDSS_T12 - EDSS_T6 >= 0.5) | relapse_T12 == 1 | lesioni_T12 == 1,
+    event_18_CT = (EDSS_T18 - EDSS_T12 >= 0.5) | relapse_T18 == 1 | lesioni_T18 == 1,
+    event_24_CT = (EDSS_T24 - EDSS_T18 >= 0.5) | relapse_T24 == 1 | lesioni_T24 == 1,
+    event_30_CT = (EDSS_T30 - EDSS_T24 >= 0.5) | relapse_T30 == 1 | lesioni_T30 == 1,
+    event_36_CT = (EDSS_T36 - EDSS_T30 >= 0.5) | relapse_T36 == 1| lesioni_T36 == 1
+  )
+dfmav <- dfmav %>%
+  mutate(
+    event_time_CT = case_when(
+      event_6_CT  ~ 6,
+      event_12_CT ~ 12,
+      event_18_CT ~ 18,
+      event_24_CT ~ 24,
+      event_30_CT ~ 30,
+      event_36_CT ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_CT = ifelse(is.na(event_time_CT), 0, 1),
+    time_CT = ifelse(is.na(event_time_CT), 36, event_time_CT)
+  )
+
+surv_obj4 <- Surv(time = dfmav$time_CT, event = dfmav$event_status_CT)
+fit4 <- survfit(surv_obj4 ~ cambio_group, data = dfmav)
+
+ggsurvplot(
+  fit4,
+  data = dfmav,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  xlab = "Months",
+  ylab = "Event-free survival"
+)
+
+#TEC
+dftec <- dftec %>%
+  mutate(
+    cambio_terapia = case_when(
+      cambio_terapia == "1" ~ "Yes",
+      cambio_terapia == "0" ~ "No",
+      TRUE ~ NA_character_
+    )
+  )
+dftec <- dftec %>%
+  mutate(
+    cambio_group = case_when(
+      GROUP == "TEC" &
+        cambio_terapia == "Yes" ~ "TEC cambio +",
+      
+      GROUP == "TEC" &
+        cambio_terapia == "No" ~ "TEC cambio -"))
+
+dftec <- dftec %>%
+  mutate(
+    event_6_CT  = (EDSS_T6  - EDSS_T0 >= 0.5) | relapse_T6  == 1 | lesioni_T6  == 1,
+    event_12_CT = (EDSS_T12 - EDSS_T6 >= 0.5) | relapse_T12 == 1 | lesioni_T12 == 1,
+    event_18_CT = (EDSS_T18 - EDSS_T12 >= 0.5) | relapse_T18 == 1 | lesioni_T18 == 1,
+    event_24_CT = (EDSS_T24 - EDSS_T18 >= 0.5) | relapse_T24 == 1 | lesioni_T24 == 1,
+    event_30_CT = (EDSS_T30 - EDSS_T24 >= 0.5) | relapse_T30 == 1 | lesioni_T30 == 1,
+    event_36_CT = (EDSS_T36 - EDSS_T30 >= 0.5) | relapse_T36 == 1| lesioni_T36 == 1
+  )
+dftec <- dftec %>%
+  mutate(
+    event_time_CT = case_when(
+      event_6_CT  ~ 6,
+      event_12_CT ~ 12,
+      event_18_CT ~ 18,
+      event_24_CT ~ 24,
+      event_30_CT ~ 30,
+      event_36_CT ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_CT = ifelse(is.na(event_time_CT), 0, 1),
+    time_CT = ifelse(is.na(event_time_CT), 36, event_time_CT)
+  )
+
+surv_obj4 <- Surv(time = dftec$time_CT, event = dftec$event_status_CT)
+fit4 <- survfit(surv_obj4 ~ cambio_group, data = dftec)
+
+ggsurvplot(
+  fit4,
+  data = dftec,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  xlab = "Months",
+  ylab = "Event-free survival"
+)
+
+
+
+#SURVIVAL RELAPSE SOLO MAV
+dfmav <- dfmav %>%
+  mutate(
+    event_6_2   = relapse_T6  == 1,
+    event_12_2  = relapse_T12  == 1,
+    event_18_2  = relapse_T18  == 1,
+    event_24_2  = relapse_T24  == 1,
+    event_30_2  = relapse_T30  == 1,
+    event_36_2  = relapse_T36  == 1
+  )
+
+dfmav <- dfmav %>%
+  mutate(
+    event_time_2 = case_when(
+      event_6_2   ~ 6,
+      event_12_2  ~ 12,
+      event_18_2  ~ 18,
+      event_24_2  ~ 24,
+      event_30_2  ~ 30,
+      event_36_2  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_2 = ifelse(is.na(event_time_2), 0, 1),
+    time_2 = ifelse(is.na(event_time_2), 36, event_time_2)
+  )
+surv_obj6 <- Surv(time = dfmav$time_2, event = dfmav$event_status_2)
+fit6 <- survfit(surv_obj6 ~ cambio_group, data = dfmav)
+
+ggsurvplot(
+  fit6,
+  data = dfmav,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  xlab = "Months",
+  ylab = "Relapse-free survival"
+)
+
+#SURVIVAL RELAPSE SOLO TEC
+dftec <- dftec %>%
+  mutate(
+    event_6_2   = relapse_T6  == 1,
+    event_12_2  = relapse_T12  == 1,
+    event_18_2  = relapse_T18  == 1,
+    event_24_2  = relapse_T24  == 1,
+    event_30_2  = relapse_T30  == 1,
+    event_36_2  = relapse_T36  == 1
+  )
+
+dftec <- dftec %>%
+  mutate(
+    event_time_2 = case_when(
+      event_6_2   ~ 6,
+      event_12_2  ~ 12,
+      event_18_2  ~ 18,
+      event_24_2  ~ 24,
+      event_30_2  ~ 30,
+      event_36_2  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_2 = ifelse(is.na(event_time_2), 0, 1),
+    time_2 = ifelse(is.na(event_time_2), 36, event_time_2)
+  )
+surv_obj6 <- Surv(time = dftec$time_2, event = dftec$event_status_2)
+fit6 <- survfit(surv_obj6 ~ cambio_group, data = dftec)
+
+ggsurvplot(
+  fit6,
+  data = dftec,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  xlab = "Months",
+  ylab = "Relapse-free survival"
+)
+
+#SURVIVAL LESIONI SOLO MAV
+dfmav <- dfmav %>%
+  mutate(
+    event_6_3   = lesioni_T6  == 1,
+    event_12_3  = lesioni_T12 == 1,
+    event_18_3  = lesioni_T18  == 1,
+    event_24_3  = lesioni_T24  == 1,
+    event_30_3  = lesioni_T30  == 1,
+    event_36_3  = lesioni_T36  == 1
+  )
+
+dfmav <- dfmav %>%
+  mutate(
+    event_time_3 = case_when(
+      event_6_3   ~ 6,
+      event_12_3  ~ 12,
+      event_18_3  ~ 18,
+      event_24_3  ~ 24,
+      event_30_3  ~ 30,
+      event_36_3  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_3 = ifelse(is.na(event_time_3), 0, 1),
+    time_3 = ifelse(is.na(event_time_3), 36, event_time_3))
+
+surv_obj7 <- Surv(time = dfmav$time_3, event = dfmav$event_status_3)
+fit7 <- survfit(surv_obj7 ~ cambio_group, data = dfmav)
+
+ggsurvplot(
+  fit7,
+  data = dfmav,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  xlab = "Months",
+  ylab = "Lesion-free survival"
+)
+
+
+#SURVIVAL LESIONI SOLO TEC
+dftec <- dftec %>%
+  mutate(
+    event_6_3   = lesioni_T6  == 1,
+    event_12_3  = lesioni_T12 == 1,
+    event_18_3  = lesioni_T18  == 1,
+    event_24_3  = lesioni_T24  == 1,
+    event_30_3  = lesioni_T30  == 1,
+    event_36_3  = lesioni_T36  == 1
+  )
+
+dftec <- dftec %>%
+  mutate(
+    event_time_3 = case_when(
+      event_6_3   ~ 6,
+      event_12_3  ~ 12,
+      event_18_3  ~ 18,
+      event_24_3  ~ 24,
+      event_30_3  ~ 30,
+      event_36_3  ~ 36,
+      TRUE ~ NA_real_
+    ),
+    
+    event_status_3 = ifelse(is.na(event_time_3), 0, 1),
+    time_3 = ifelse(is.na(event_time_3), 36, event_time_3)
+  )
+surv_obj7 <- Surv(time = dftec$time_3, event = dftec$event_status_3)
+fit7 <- survfit(surv_obj7 ~ cambio_group, data = dftec)
+
+ggsurvplot(
+  fit7,
+  data = dftec,
+  risk.table = FALSE,
+  pval = TRUE,
+  conf.int = FALSE,
+  legend.title = "Groups",
+  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  xlab = "Months",
+  ylab = "Lesion-free survival"
+)
 
 #GADOLINIUM -> analisi aggiuntive
 table(merged$gadolinium_contrast, merged$GROUP)
