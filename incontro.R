@@ -1,6 +1,15 @@
 #apertura di merged
 merged <- read.csv2("input/merged.csv")
 source("library.R")
+
+dfmav <- merged %>%
+  filter(GROUP == "MAV")
+
+dftec <- merged %>%
+  filter(GROUP == "TEC")
+
+table (merged$gc_treatment)
+source("library.R")
 #COLONNA EDSS FINALE
 merged <- merged %>%
   rowwise() %>%
@@ -29,27 +38,24 @@ merged <- merged %>%
       
       delta_EDSS >= 0.5 ~ "EDSS_Worsening",
       
-      delta_EDSS <= -0.5 ~ "EDSS_Improvement",
       
-      abs(delta_EDSS) < 0.5 & EDSS_T0 < 4 ~
-        "Low stable",
-      
-      abs(delta_EDSS) < 0.5 & EDSS_T0 >= 4 ~    
-        "High stable"
+      abs(delta_EDSS) < 0.5 ~
+        "Stable"
     )
   )
 #PATTERN 
 merged <- merged %>%
   mutate(
-    EDSS_class = ifelse(EDSS_T0 >= 4,
-                        "EDSS ≥ 4",
-                        "EDSS < 4")
+    EDSS_class = ifelse(EDSS_T0 >= 3,
+                        "EDSS ≥ 3",
+                        "EDSS < 3")
   )
 #ANDAMENTO TABELLA1
 table(merged$andamento_EDSS)
 
 table(merged$GROUP,
       merged$andamento_EDSS)
+
 
 tabella1 <- table(merged$GROUP,
               merged$andamento_EDSS)
@@ -105,10 +111,17 @@ fisher.test(tabella2)
 
 
 #BARPLOT CON TEXTURE
-
 plot_df <- merged %>%
   filter(!is.na(andamento_EDSS)) %>%
-  count(andamento_EDSS, GROUP, EDSS_class)
+  count(andamento_EDSS, GROUP, EDSS_class) %>%
+  mutate(
+    EDSS_class = factor(
+      EDSS_class,
+      levels = c("EDSS ≥ 3", "EDSS < 3")
+    )
+  )
+
+
 ggplot(
   plot_df,
   aes(
@@ -118,21 +131,52 @@ ggplot(
     pattern = EDSS_class
   )
 ) +
-  
   geom_col_pattern(
     position = "stack",
     colour = "black",
-    
     pattern_fill = "black",
-    pattern_colour = "black"
+    pattern_colour = "black",
+    pattern_density = 0.4,
+    pattern_spacing = 0.03,
+    pattern_size = 0.4
   ) +
-  
+  scale_fill_manual(
+    values = c(
+      "MAV" = "#F8766D",
+      "TEC" = "#00BFC4"
+    )
+  ) +
   scale_pattern_manual(
     values = c(
-      "EDSS < 4" = "stripe",
-      "EDSS ≥ 4" = "circle"
+      "EDSS < 3" = "stripe",
+      "EDSS ≥ 3" = "circle"
+    )
+  ) +
+  labs(
+    x = "",
+    y = "n",
+    fill = "GROUP",
+    pattern = "EDSS_class"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1
     )
   )
+
+
+
+
+
+
+
+
+
+
+
+
 
 #PERCENTUALE DI WORSENING
 ggplot(merged,
@@ -196,7 +240,10 @@ merged <- merged %>%
       group == "TEC" & gc == 0 ~ "TEC_GC-"
     )
   )
-
+merged$gc_group <- factor(
+  merged$gc_group,
+  levels = c("TEC_GC+", "TEC_GC-", "MAV_GC+", "MAV_GC-")
+)
 
 #SURVIVAL PLOT
 merged <- merged %>%
@@ -420,6 +467,11 @@ dfmav <- dfmav %>%
     )
   )
 
+merged$gc_group <- factor(
+  merged$gc_group,
+  levels = c("MAV cambio +", "MAV cambio -"))
+
+
 dfmav <- dfmav %>%
   mutate(
     event_6_3   = lesioni_T6  == 1,
@@ -456,7 +508,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV GC+", "MAV GC-"),
+  #legend.labs = c("MAV GC+", "MAV GC-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
@@ -471,6 +523,10 @@ dftec <- dftec %>%
       group == "TEC" & gc == 1 ~ "TEC_GC+",
       group == "TEC" & gc == 0 ~ "TEC_GC-"
     ))
+
+merged$gc_group <- factor(
+  merged$gc_group,
+  levels = c("TEC cambio +", "TEC cambio -"))
 
 dftec<- dftec %>%
   mutate(
@@ -508,7 +564,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC GC+", "TEC GC-"),
+  #legend.labs = c("TEC GC+", "TEC GC-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
@@ -763,6 +819,7 @@ merged <- merged %>%
       TRUE ~ NA_character_
     )
   )
+
 table(merged$cambio_terapia, merged$GROUP)
 
 ggplot(subset(merged, !is.na(cambio_terapia) & !is.na(GROUP)),
@@ -796,19 +853,22 @@ merged <- merged %>%
   mutate(
     cambio_group = case_when(
       GROUP == "MAV" &
-        cambio_terapia == "Yes" ~ "MAV cambio +",
+        cambio_terapia == 1 ~ "MAV cambio +",
       
       GROUP == "MAV" &
-        cambio_terapia == "No" ~ "MAV cambio -",
+        cambio_terapia == 0 ~ "MAV cambio -",
       
       GROUP == "TEC" &
-        cambio_terapia == "Yes" ~ "TEC cambio +",
+        cambio_terapia == 1 ~ "TEC cambio +",
       
       GROUP == "TEC" &
-        cambio_terapia == "No" ~ "TEC cambio -"
+        cambio_terapia == 0 ~ "TEC cambio -"
     )
   )
 
+merged$cambio_group <- factor(
+  merged$cambio_group,
+  levels = c("MAV cambio +", "MAV cambio -", "TEC cambio +", "TEC cambio -"))
 #survival
 merged <- merged %>%
   mutate(
@@ -895,7 +955,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "EDSS progression-free survival"
 )
@@ -911,7 +971,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "Relapse-free survival"
 )
@@ -927,7 +987,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-", "TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
@@ -949,6 +1009,14 @@ dfmav <- dfmav %>%
       
       GROUP == "MAV" &
         cambio_terapia == "No" ~ "MAV cambio -"))
+
+
+merged$cambio_group <- factor(
+  merged$cambio_group,
+  levels = c("MAV cambio +", "MAV cambio -"))
+
+
+
 
 dfmav <- dfmav %>%
   mutate(
@@ -985,7 +1053,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-"),
   xlab = "Months",
   ylab = "Event-free survival"
 )
@@ -1007,6 +1075,12 @@ dftec <- dftec %>%
       
       GROUP == "TEC" &
         cambio_terapia == "No" ~ "TEC cambio -"))
+
+merged$cambio_group <- factor(
+  merged$cambio_group,
+  levels = c("TEC cambio +", "TEC cambio -"))
+
+
 
 dftec <- dftec %>%
   mutate(
@@ -1043,7 +1117,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "Event-free survival"
 )
@@ -1086,7 +1160,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-"),
   xlab = "Months",
   ylab = "Relapse-free survival"
 )
@@ -1127,7 +1201,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "Relapse-free survival"
 )
@@ -1168,7 +1242,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV cambio+", "MAV cambio-"),
+  #legend.labs = c("MAV cambio+", "MAV cambio-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
@@ -1210,7 +1284,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("TEC cambio+", "TEC cambio-"),
+  #legend.labs = c("TEC cambio+", "TEC cambio-"),
   xlab = "Months",
   ylab = "Lesion-free survival"
 )
@@ -1426,6 +1500,10 @@ ggsurvplot(
 
 
 #NEDA 3 SURVIVAL
+merged$GROUP <- factor(
+  merged$GROUP,
+  levels = c("MAV", "TEC"))
+
 merged <- merged %>%
   mutate(
     event_6_CT =
@@ -1514,7 +1592,7 @@ ggsurvplot(
   pval = TRUE,
   conf.int = FALSE,
   legend.title = "Groups",
-  legend.labs = c("MAV", "TEC"),
+  #legend.labs = c("MAV", "TEC"),
   xlab = "Months",
   ylab = "NEDA-free survival"
 )
