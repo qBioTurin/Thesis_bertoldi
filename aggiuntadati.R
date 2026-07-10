@@ -708,6 +708,7 @@ merged <- merged %>%
   )
 
 #aggiunta dati al 9 luglio con dataset alessandro
+#TEC
 merged$EDSS_T30[merged$ID == "TEC02"] <- 1
 merged$relapse_T30[merged$ID == "TEC02"] <- 0
 merged$cortisone_T30[merged$ID == "TEC02"] <- 0
@@ -789,8 +790,127 @@ merged$EDSS_T18[merged$ID == "TEC18"] <- 1.5
 merged$relapse_T18[merged$ID == "TEC18"] <- 0
 merged$cortisone_T18[merged$ID == "TEC18"] <- 0
 
+merged$EDSS_T6[merged$ID== "TEC19"] <- 1
+merged$lesioni_T12[merged$ID== "TEC20"] <- 0
+merged$relapse_T12[merged$ID== "TEC20"] <- 0
+merged$cortisone_T12[merged$ID== "TEC20"] <- 0
+
+merged$EDSS_T6[merged$ID== "TEC21"] <- 1.5
+merged$lesioni_T6[merged$ID== "TEC21"] <- 0
+merged$relapse_T6[merged$ID== "TEC21"] <- 0
+merged$cortisone_T6[merged$ID== "TEC21"] <- 0
+
+merged$EDSS_T18[merged$ID== "TEC22"] <- 1.5
+merged$lesioni_T18[merged$ID== "TEC22"] <- 0
+merged$relapse_T18[merged$ID== "TEC22"] <- 0
+merged$cortisone_T18[merged$ID== "TEC22"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC22"] <- 1
+merged$lesioni_T36[merged$ID== "TEC22"] <- 0
+merged$relapse_T36[merged$ID== "TEC22"] <- 0
+merged$cortisone_T36[merged$ID== "TEC22"] <- 0
 
 
+merged$EDSS_T6[merged$ID== "TEC23"] <- 0
+merged$lesioni_T6[merged$ID== "TEC23"] <- 0
+merged$relapse_T6[merged$ID== "TEC23"] <- 0
+merged$cortisone_T6[merged$ID== "TEC23"] <- 0
+
+merged$EDSS_T18[merged$ID== "TEC23"] <- 0
+merged$lesioni_T18[merged$ID== "TEC23"] <- 0
+merged$relapse_T18[merged$ID== "TEC23"] <- 0
+merged$cortisone_T18[merged$ID== "TEC23"] <- 0
+
+merged$EDSS_T24[merged$ID== "TEC23"] <- 0
+merged$lesioni_T24[merged$ID== "TEC23"] <- 0
+merged$relapse_T24[merged$ID== "TEC23"] <- 0
+merged$cortisone_T24[merged$ID== "TEC23"] <- 0
+
+merged$EDSS_T6[merged$ID== "TEC24"] <- 1
+merged$relapse_T12[merged$ID== "TEC24"] <- 1
+
+merged$EDSS_T6[merged$ID== "TEC25"] <- 1.5
+merged$EDSS_T18[merged$ID== "TEC25"] <- 1.5
+
+merged$EDSS_T6[merged$ID== "TEC26"] <- 2
+merged$lesioni_T6[merged$ID== "TEC26"] <- 0
+merged$relapse_T6[merged$ID== "TEC26"] <- 0
+merged$EDSS_T18[merged$ID== "TEC26"] <- 2
+merged$lesioni_T18[merged$ID== "TEC26"] <- 0
+merged$relapse_T18[merged$ID== "TEC26"] <- 0
+
+merged$EDSS_T6[merged$ID== "TEC27"] <- 2
+merged$lesioni_T6[merged$ID== "TEC27"] <- 0
+merged$relapse_T6[merged$ID== "TEC27"] <- 0
+merged$cortisone_T6[merged$ID== "TEC27"] <- 0
+merged$cortisone_T12[merged$ID== "TEC27"] <- 0
+merged$EDSS_T18[merged$ID== "TEC27"] <- 2.5
+merged$lesioni_T18[merged$ID== "TEC27"] <- 0
+merged$relapse_T18[merged$ID== "TEC27"] <- 0
+merged$cortisone_T18[merged$ID== "TEC27"] <- 0
+merged$cortisone_T24[merged$ID== "TEC27"] <- 0
+
+merged$EDSS_T6[merged$ID== "TEC28"] <- 2
+merged$lesioni_T6[merged$ID== "TEC28"] <- 0
+merged$relapse_T6[merged$ID== "TEC28"] <- 0
+merged$cortisone_T6[merged$ID== "TEC28"] <- 0
+merged$relapse_T12[merged$ID== "TEC28"] <- 0
+merged$EDSS_T18[merged$ID== "TEC28"] <- 3
+merged$lesioni_T18[merged$ID== "TEC28"] <- 0
+merged$relapse_T18[merged$ID== "TEC28"] <- 0
+merged$cortisone_T18[merged$ID== "TEC28"] <- 0
+merged$sex[merged$ID== "TEC32"] <- "F"
+
+merged$EDSS_T6[merged$ID== "TEC29"] <- 3
+merged$EDSS_T18[merged$ID== "TEC29"] <- 3
+merged$lesioni_T18[merged$ID== "TEC29"] <- 0
+merged$relapse_T18[merged$ID== "TEC29"] <- 0
+merged$cortisone_T18[merged$ID== "TEC29"] <- 0
+
+merged$EDSS_T6[merged$ID== "TEC30"] <- 0
+merged$lesioni_T6[merged$ID== "TEC30"] <- 0
+merged$relapse_T6[merged$ID== "TEC30"] <- 0
+merged$cortisone_T6[merged$ID== "TEC30"] <- 0
+merged$EDSS_T18[merged$ID== "TEC30"] <- 0
+merged$lesioni_T18[merged$ID== "TEC30"] <- 0
+merged$relapse_T18[merged$ID== "TEC30"] <- 0
+merged$cortisone_T18[merged$ID== "TEC30"] <- 0
+
+
+merged$EDSS_T6[merged$ID== "TEC31"] <- 1
+merged$lesioni_T6[merged$ID== "TEC31"] <- 0
+merged$relapse_T6[merged$ID== "TEC31"] <- 0
+merged$cortisone_T6[merged$ID== "TEC31"] <- 0
+merged$EDSS_T18[merged$ID== "TEC31"] <- 1
+merged$lesioni_T18[merged$ID== "TEC31"] <- 0
+merged$relapse_T18[merged$ID== "TEC31"] <- 0
+merged$cortisone_T18[merged$ID== "TEC31"] <- 0
+
+
+merged$EDSS_T6[merged$ID== "TEC32"] <- 2
+merged$lesioni_T6[merged$ID== "TEC32"] <- 0
+merged$relapse_T6[merged$ID== "TEC32"] <- 0
+merged$cortisone_T6[merged$ID== "TEC32"] <- 0
+merged$EDSS_T12[merged$ID== "TEC32"] <- 2
+merged$lesioni_T12[merged$ID== "TEC32"] <- 0
+merged$relapse_T12[merged$ID== "TEC32"] <- 0
+merged$cortisone_T12[merged$ID== "TEC32"] <- 0
+merged$EDSS_T18[merged$ID== "TEC32"] <- 2
+merged$lesioni_T18[merged$ID== "TEC32"] <- 0
+merged$relapse_T18[merged$ID== "TEC32"] <- 0
+merged$cortisone_T18[merged$ID== "TEC32"] <- 0
+merged$naive[merged$ID== "TEC32"] <- "no"
+merged$naive[merged$ID== "TEC29"] <- "no"
+merged$naive[merged$ID== "TEC25"] <- "no"
+merged$gc_treatment[merged$ID== "TEC11"] <- "positive"
+
+merged$gc_treatment[merged$ID== "MAV07"] <- "positive"
+merged$gc_treatment[merged$ID== "MAV09"] <- "positive"
+
+#MAV
+
+
+#SOVRASCRIZIONE MERGED
 write.csv2(merged,
            "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/merged.csv",
            row.names = FALSE, 
