@@ -744,6 +744,7 @@ merged$lesioni_T24[merged$ID == "TEC07"] <- 0
 merged$relapse_T24[merged$ID == "TEC07"] <- 0
 merged$cortisone_T24[merged$ID == "TEC07"] <- 0
 
+merged$EDSS_T18[merged$ID == "TEC08"] <- 1
 merged$lesioni_T18[merged$ID == "TEC08"] <- 0
 merged$relapse_T18[merged$ID == "TEC08"] <- 1
 
@@ -1021,6 +1022,249 @@ merged$relapse_T6[merged$ID== "MAV34"] <- 0
 merged$EDSS_T18[merged$ID== "MAV34"] <- 2
 merged$lesioni_T18[merged$ID== "MAV34"] <- 0
 merged$relapse_T18[merged$ID== "MAV34"] <- 0
+merged$naive[merged$ID== "MAV34"] <- "no"
+
+merged$EDSS_T0[merged$ID == "MAV23"] <- 0
+
+
+merged <- merged %>%
+  filter(ID != "TEC18")
+
+merged <- merged %>%
+  filter(ID != "TEC12")
+
+merged <- merged %>%
+  filter(ID != "TEC13")
+
+
+
+merged <- merged %>%
+  select(1:(which(names(.) == "EDSS_class") - 1))
+
+
+merged %>% 
+  filter(is.na(subtentorial_lesions)) %>% 
+  select(ID, subtentorial_lesions)
+merged %>% 
+  filter(is.na(bone_marrow_lesions)) %>% 
+  select(ID, bone_marrow_lesions)
+merged %>% 
+  filter(is.na(lesion_burden)) %>% 
+  select(ID, lesion_burden)
+merged %>% 
+  filter(is.na(gc_treatment)) %>% 
+  select(ID, gc_treatment)
+merged %>% 
+  filter(is.na(physical_activity)) %>% 
+  select(ID, physical_activity)
+merged %>% 
+  filter(is.na(smoking_habit)) %>% 
+  select(ID, smoking_habit)
+merged %>% 
+  filter(is.na(MEDAS)) %>% 
+  select(ID, MEDAS)
+merged %>% 
+  filter(is.na(age_at_T0)) %>% 
+  select(ID, age_at_T0)
+merged %>% 
+  filter(is.na(bmi)) %>% 
+  select(ID, bmi)
+merged %>% 
+  filter(is.na(naive)) %>% 
+  select(ID, naive)
+merged %>% 
+  filter(is.na(cambio_terapia)) %>% 
+  select(ID, cambio_terapia)
+
+merged$EDSS_18[merged$ID== "MAV09"] <- 3.5
+merged$lesioni_T18[merged$ID== "MAV09"] <- 0
+merged$relapse_T18[merged$ID== "MAV09"] <- 0
+merged$cortisone_T18[merged$ID== "MAV09"] <- 0
+
+merged$EDSS_24[merged$ID== "MAV09"] <- 3.5
+merged$lesioni_T24[merged$ID== "MAV09"] <- 0
+merged$relapse_T24[merged$ID== "MAV09"] <- 0
+merged$cortisone_T24[merged$ID== "MAV09"] <- 0
+
+
+
+relapse_cols <- grep("^relapse_", names(merged), value = TRUE)
+
+merged[relapse_cols] <- t(apply(merged[relapse_cols], 1, function(x){
+  
+  last_obs <- tail(which(!is.na(x)), 1)
+  
+  if(length(last_obs) == 0) return(x)
+  
+  x[1:last_obs][is.na(x[1:last_obs])] <- 0
+  
+  x
+}))
+
+
+lesioni_cols <- grep("^lesioni_", names(merged), value = TRUE)
+
+merged[lesioni_cols] <- t(apply(merged[lesioni_cols], 1, function(x){
+  
+  last_obs <- tail(which(!is.na(x)), 1)
+  
+  if(length(last_obs) == 0) return(x)
+  
+  x[1:last_obs][is.na(x[1:last_obs])] <- 0
+  
+  x
+}))
+
+
+
+merged <- merged %>%
+  mutate(
+    across(
+      matches("^(relapse_T|lesioni_T)"),
+      ~ ifelse(ID %in% c("MAV31", "MAV32", "MAV33") & is.na(.), 0, .)
+    ))
+    
+    
+cortisone_cols <- grep("^cortisone_", names(merged), value = TRUE)
+
+merged[cortisone_cols] <- t(apply(merged[cortisone_cols], 1, function(x){
+  
+  last_obs <- tail(which(!is.na(x)), 1)
+  
+  if(length(last_obs) == 0) return(x)
+  
+  x[1:last_obs][is.na(x[1:last_obs])] <- 0
+  
+  x
+}))
+
+
+merged$lesioni_T6[merged$ID== "MAV20"] <- 0
+merged$relapse_T6[merged$ID== "MAV20"] <- 0
+merged$cortisone_T6[merged$ID== "MAV20"] <- 0
+merged$lesioni_T12[merged$ID== "MAV20"] <- 0
+merged$relapse_T12[merged$ID== "MAV20"] <- 0
+merged$cortisone_T12[merged$ID== "MAV20"] <- 0
+merged$lesioni_T6[merged$ID== "TEC19"] <- 0
+merged$relapse_T6[merged$ID== "TEC19"] <- 0
+merged$cortisone_T6[merged$ID== "TEC19"] <- 0
+merged$lesioni_T12[merged$ID== "TEC19"] <- 0
+merged$relapse_T12[merged$ID== "TEC19"] <- 0
+merged$cortisone_T12[merged$ID== "TEC19"] <- 0
+merged$EDSS_T18[merged$ID== "TEC19"] <- 1
+merged$lesioni_T18[merged$ID== "TEC19"] <- 0
+merged$relapse_T18[merged$ID== "TEC19"] <- 0
+merged$cortisone_T18[merged$ID== "TEC19"] <- 0
+
+merged$cortisone_T6[merged$ID== "TEC25"] <- 0
+merged$cortisone_T6[merged$ID== "TEC26"] <- 0
+merged$cortisone_T12[merged$ID== "TEC25"] <- 0
+merged$cortisone_T12[merged$ID== "TEC26"] <- 0
+merged$cortisone_T18[merged$ID== "TEC25"] <- 0
+merged$cortisone_T18[merged$ID== "TEC26"] <- 0
+merged$cortisone_T24[merged$ID== "TEC25"] <- 0
+merged$cortisone_T24[merged$ID== "TEC26"] <- 0
+merged$EDSS_T30[merged$ID =="TEC26"] <- 2
+merged$lesioni_T30[merged$ID =="TEC26"] <- 0
+merged$relapse_T30[merged$ID =="TEC26"] <- 0
+merged$cortisone_T30[merged$ID =="TEC26"] <- 0
+
+merged$EDSS_T18[merged$ID== "TEC03"] <- 1.5
+merged$EDSS_T18[merged$ID== "TEC15"] <- 0
+merged$EDSS_T18[merged$ID== "TEC17"] <- 0
+merged$EDSS_T24[merged$ID== "TEC15"] <- 0
+merged$EDSS_T30[merged$ID== "TEC15"] <- 0
+merged$EDSS_T36[merged$ID== "TEC15"] <- 0
+merged$lesioni_T18[merged$ID== "TEC15"] <- 0
+merged$relapse_T18[merged$ID== "TEC15"] <- 0
+merged$cortisone_T18[merged$ID== "TEC15"] <- 0
+merged$lesioni_T24[merged$ID== "TEC15"] <- 0
+merged$relapse_T24[merged$ID== "TEC15"] <- 0
+merged$cortisone_T24[merged$ID== "TEC15"] <- 0
+
+merged$lesioni_T30[merged$ID== "TEC15"] <- 0
+merged$relapse_T30[merged$ID== "TEC15"] <- 0
+merged$cortisone_T30[merged$ID== "TEC15"] <- 0
+merged$lesioni_T36[merged$ID== "TEC15"] <- 0
+merged$relapse_T36[merged$ID== "TEC15"] <- 0
+merged$cortisone_T36[merged$ID== "TEC15"] <- 0
+
+merged$EDSS_T24[merged$ID== "TEC17"] <- 0
+
+merged$lesioni_T18[merged$ID== "TEC24"] <- 0
+merged$relapse_T18[merged$ID== "TEC24"] <- 0
+
+
+merged$EDSS_T24[merged$ID== "TEC24"] <- 1.5
+merged$lesioni_T24[merged$ID== "TEC24"] <- 0
+merged$relapse_T24[merged$ID== "TEC24"] <- 0
+merged$cortisone_T24[merged$ID== "TEC24"] <- 0
+
+merged$EDSS_T30[merged$ID== "TEC24"] <- 1.5
+merged$lesioni_T30[merged$ID== "TEC24"] <- 0
+merged$relapse_T30[merged$ID== "TEC24"] <- 0
+merged$cortisone_T30[merged$ID== "TEC24"] <- 0
+merged$EDSS_T36[merged$ID== "TEC24"] <- 1.5
+merged$lesioni_T36[merged$ID== "TEC24"] <- 0
+merged$relapse_T36[merged$ID== "TEC24"] <- 0
+merged$cortisone_T36[merged$ID== "TEC24"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC26"] <- 2
+merged$lesioni_T36[merged$ID== "TEC26"] <- 0
+merged$relapse_T36[merged$ID== "TEC26"] <- 0
+merged$cortisone_T36[merged$ID== "TEC26"] <- 0
+
+merged$EDSS_T30[merged$ID== "TEC27"] <- 2.5
+merged$lesioni_T30[merged$ID== "TEC27"] <- 0
+merged$relapse_T30[merged$ID== "TEC27"] <- 0
+merged$cortisone_T30[merged$ID== "TEC27"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC27"] <- 2.5
+merged$lesioni_T36[merged$ID== "TEC27"] <- 0
+merged$relapse_T36[merged$ID== "TEC27"] <- 0
+merged$cortisone_T36[merged$ID== "TEC27"] <- 0
+
+merged$EDSS_T30[merged$ID== "TEC28"] <- 3.5
+merged$lesioni_T30[merged$ID== "TEC28"] <- 0
+merged$relapse_T30[merged$ID== "TEC28"] <- 0
+merged$cortisone_T30[merged$ID== "TEC28"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC28"] <- 3.5
+merged$lesioni_T36[merged$ID== "TEC28"] <- 0
+merged$relapse_T36[merged$ID== "TEC28"] <- 0
+merged$cortisone_T36[merged$ID== "TEC28"] <- 0
+
+
+merged$EDSS_T30[merged$ID== "TEC29"] <- 3.5
+merged$lesioni_T30[merged$ID== "TEC29"] <- 0
+merged$relapse_T30[merged$ID== "TEC29"] <- 0
+merged$cortisone_T30[merged$ID== "TEC29"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC29"] <- 3.5
+merged$lesioni_T36[merged$ID== "TEC29"] <- 0
+merged$relapse_T36[merged$ID== "TEC29"] <- 0
+merged$cortisone_T36[merged$ID== "TEC29"] <- 0
+
+merged$EDSS_T30[merged$ID== "TEC30"] <- 0
+merged$lesioni_T30[merged$ID== "TEC30"] <- 0
+merged$relapse_T30[merged$ID== "TEC30"] <- 0
+merged$cortisone_T30[merged$ID== "TEC30"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC30"] <- 0
+merged$lesioni_T36[merged$ID== "TEC30"] <- 0
+merged$relapse_T36[merged$ID== "TEC30"] <- 0
+merged$cortisone_T36[merged$ID== "TEC30"] <- 0
+
+
+merged$EDSS_T30[merged$ID== "TEC31"] <- 1.5
+merged$lesioni_T30[merged$ID== "TEC31"] <- 0
+merged$relapse_T30[merged$ID== "TEC31"] <- 0
+merged$cortisone_T30[merged$ID== "TEC31"] <- 0
+
+merged$EDSS_T36[merged$ID== "TEC31"] <- 1.5
+merged$lesioni_T36[merged$ID== "TEC31"] <- 0
+merged$relapse_T36[merged$ID== "TEC31"] <- 0
+merged$cortisone_T36[merged$ID== "TEC31"] <- 0
 
 
 
