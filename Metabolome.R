@@ -1,7 +1,7 @@
 #apertura file metabolomica 
 source("library.R")
 
-# matrice metabolomica
+ # matrice metabolomica
 mat <- read_excel("C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/metabolome_countmatrix.xlsx")
 
 #salvataggio mat_t (trasposta)
@@ -18,7 +18,7 @@ write.csv2(mat_t_filtered,
            row.names = FALSE, 
            fileEncoding = "UTF-8")
 
-#apertura di mat_t
+#apertura di mat_t_filtered
 mat_t_filtered <- read.csv2("input/mat_t_filtered.csv")
 
 # annotazioni
@@ -34,6 +34,32 @@ write.csv2(batch,
            fileEncoding = "UTF-8")
 
 batch <- read.csv2("input/batch.csv")
+
+#METADATI COORTE SANI 
+metadati_sani <- readxl::read_excel("metadati_sani.xlsx")
+
+#modifiche dataset 
+metadati_sani <- metadati_sani %>%
+  mutate(MEDAS = MEDAS * 100)
+
+#sovrascrivo il file
+write.csv2(metadati_sani,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/metadati_sani.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
+
+#apertura metadati_sani SOVRASCRITTO in csv
+metadati_sani <- read.csv2("input/metadati_sani.csv")
+
+# sovrascrizione Combat_batch2
+write.csv2(Combat_batch2,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/Combat_batch2.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
+#apertura Combat_batch2
+Combat_batch2 <- read.delim("input/Combat_batch2.csv", sep = ",", header = TRUE)
+
+##########################################################################################
 
 #modifico e elimino nomi di samples (ctr, new)
 colnames(mat)[colnames(mat) == "RR_old"] <- "ctr_16"
@@ -60,7 +86,6 @@ mat_t <- mat %>% #mat_t è la matrice originale MA trasposta
   rownames_to_column(var = "Samples")
 
 mat_t_clean <- mat_t[mat_t$Labels != "qc", ] #mat__clean è la matrice solo con sani e malati (NO QC)
-
 
 
 
@@ -220,11 +245,89 @@ hist(zero_pct,
 table(cut(zero_pct,
           breaks = seq(0,100,10)))
 
+#rioridno colonn per metaboanalyst
+mat_t_filtered <- mat_t_filtered %>%
+  rename(batch = batch_metabolomica) %>%
+  mutate(batch = paste0("B", batch))
 
-#apro mat_corrected (mettiti in wd di input)
-mat_corrected <- read.csv(
-  "mat_corrected.csv",
+mat_t_filtered <- mat_t_filtered[, c(
+  setdiff(names(mat_t_filtered), c("Therapy", "batch")),
+  "batch",
+  "Therapy"
+)]
+
+mat_t_filtered <- mat_t_filtered %>%
+  relocate(batch, Therapy, .after = 2)
+
+#correzione combat SENZA log2
+Combat_batch <- read.delim("input/Combat_batch.csv", sep = ",", header = TRUE)
+
+#MAT LOG
+mat_log <- mat_t_filtered
+
+mat_log[, 5:ncol(mat_log)] <- log2(
+  as.matrix(mat_t_filtered[, 5:ncol(mat_t_filtered)]) + 1
+)
+
+write.csv2(mat_log,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/mat_log.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
+
+mat_log <- read.csv2("input/mat_log.csv")
+
+#correzione combat con log2 
+
+Combat_batch2 <- read.csv2(
+  "input/Combat_batch2.csv",
   header = TRUE,
   check.names = FALSE
 )
 
+
+
+#CREO DATASET PARALLELO CON COLONNA THERAPY 
+Combat_patients <- read.csv2("Combat_batch2.csv", check.names = FALSE)
+
+Combat_patients$CLASS <- Combat_patients$THERAPY
+Combat_patients <- Combat_patients %>%
+   mutate(
+         THERAPY = case_when(
+        grepl("^TEC", NAME) ~ "TEC",
+       grepl("^MAV", NAME) ~ "MAV",
+      grepl("^MS",  NAME) ~ NA_character_,
+         TRUE ~ NA_character_
+      )
+       )
+
+
+Combat_patients <- Combat_patients[, c(
+  "NAME",
+  "THERAPY",
+  setdiff(names(Combat_patients), c("NAME", "THERAPY"))
+)]
+
+Combat_patients <- Combat_patients[
+  !grepl("^(QC|ctr)", Combat_patients$NAME),
+]
+
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_17_t0"] <- "TEC"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_13_t0"] <- "TEC"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_18_t0"] <- "altre terapie"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_1_t0"] <- "altre terapie"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_2_t0"] <- "altre terapie"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_4"] <- "TEC"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_11_t0"] <- "TEC"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_5"] <- "TEC"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_6"] <- "altre terapie"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_10_t0"] <- "altre terapie"
+Combat_patients$THERAPY[Combat_patients$NAME== "MS_9"] <- "altre terapie"
+
+Combat_patients$THERAPY[is.na(Combat_patients$THERAPY)] <- "altre terapie"
+
+#sovrascrivo Combat_patients
+write.csv2(
+  Combat_patients,
+  "Combat_patients.csv",
+  row.names = FALSE
+)
