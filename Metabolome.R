@@ -57,7 +57,7 @@ write.csv2(Combat_batch2,
            row.names = FALSE, 
            fileEncoding = "UTF-8")
 #apertura Combat_batch2
-Combat_batch2 <- read.delim("input/Combat_batch2.csv", sep = ",", header = TRUE)
+Combat_batch2 <- read.delim("input/Combat_batch2.csv", sep = ";", header = TRUE)
 
 ##########################################################################################
 
@@ -331,3 +331,25 @@ write.csv2(
   "Combat_patients.csv",
   row.names = FALSE
 )
+
+
+
+#creo dataset solo con controlli e pazienti 
+Combat_batch_pt_ctr <- Combat_batch2[-(1:12), ]
+
+#sovrascrivo 
+write.csv2(Combat_batch_pt_ctr,
+           "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/Combat_batch_pt_ctr.csv",
+           row.names = FALSE, 
+           fileEncoding = "UTF-8")
+
+#apertura 
+
+Combat_batch_pt_ctr <- read.delim(
+  "input/Combat_batch_pt_ctr.csv",
+  sep = ";",
+  header = TRUE,
+  blank.lines.skip = TRUE
+)
+
+
