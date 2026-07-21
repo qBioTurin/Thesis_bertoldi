@@ -1266,7 +1266,16 @@ merged$lesioni_T36[merged$ID== "TEC31"] <- 0
 merged$relapse_T36[merged$ID== "TEC31"] <- 0
 merged$cortisone_T36[merged$ID== "TEC31"] <- 0
 
+merged$age_at_T0[merged$ID == "TEC30"] <- 19
+merged$age_at_T0[merged$ID == "TEC31"] <- 55
 
+merged$bmi[merged$ID == "MAV07"] <- 23.51
+merged$bmi[merged$ID == "MAV08"] <- 21.88
+merged$bmi[merged$ID == "MAV22"] <- 30.45
+
+merged$lesioni_T24[merged$ID== "MAV19"] <- 0
+merged$relapse_T24[merged$ID== "MAV19"] <- 0
+merged$cortisone_T24[merged$ID== "MAV19"] <- 0
 
 #SOVRASCRIZIONE MERGED
 write.csv2(merged,
