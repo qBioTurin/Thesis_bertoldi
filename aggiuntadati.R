@@ -1277,6 +1277,220 @@ merged$lesioni_T24[merged$ID== "MAV19"] <- 0
 merged$relapse_T24[merged$ID== "MAV19"] <- 0
 merged$cortisone_T24[merged$ID== "MAV19"] <- 0
 
+merged$EDSS_T18[merged$ID== "MAV05"] <- 3
+merged$lesioni_T18[merged$ID== "MAV05"] <- 0
+merged$relapse_T18[merged$ID== "MAV05"] <- 0
+merged$cortisone_T18[merged$ID== "MAV05"] <- 0
+merged$EDSS_T24[merged$ID== "MAV05"] <- 3
+merged$lesioni_T24[merged$ID== "MAV05"] <- 0
+merged$relapse_T24[merged$ID== "MAV05"] <- 0
+merged$cortisone_T24[merged$ID== "MAV05"] <- 0
+merged$EDSS_T30[merged$ID== "MAV05"] <- 3
+merged$lesioni_T30[merged$ID== "MAV05"] <- 0
+merged$relapse_T30[merged$ID== "MAV05"] <- 0
+merged$cortisone_T30[merged$ID== "MAV05"] <- 0
+merged$EDSS_T36[merged$ID== "MAV05"] <- 3
+merged$lesioni_T36[merged$ID== "MAV05"] <- 0
+merged$relapse_T36[merged$ID== "MAV05"] <- 0
+merged$cortisone_T36[merged$ID== "MAV05"] <- 0
+
+merged$EDSS_T24[merged$ID== "MAV07"] <- 2
+merged$lesioni_T24[merged$ID== "MAV07"] <- 0
+merged$relapse_T24[merged$ID== "MAV07"] <- 0
+merged$cortisone_T24[merged$ID== "MAV07"] <- 0
+merged$EDSS_T30[merged$ID== "MAV07"] <- 2
+merged$lesioni_T30[merged$ID== "MAV07"] <- 0
+merged$relapse_T30[merged$ID== "MAV07"] <- 0
+merged$cortisone_T30[merged$ID== "MAV07"] <- 0
+merged$EDSS_T36[merged$ID== "MAV07"] <- 2
+merged$lesioni_T36[merged$ID== "MAV07"] <- 0
+merged$relapse_T36[merged$ID== "MAV07"] <- 0
+merged$cortisone_T36[merged$ID== "MAV07"] <- 0
+
+
+merged$EDSS_T18[merged$ID== "MAV09"] <- 3.5
+merged$EDSS_T24[merged$ID== "MAV09"] <- 3.5
+merged$EDSS_T36[merged$ID== "MAV09"] <- 2
+
+merged$EDSS_T36[merged$ID== "MAV12"] <- 0
+merged$lesioni_T36[merged$ID== "MAV12"] <- 0
+merged$relapse_T36[merged$ID== "MAV12"] <- 0
+merged$cortisone_T36[merged$ID== "MAV12"] <- 0
+
+merged$EDSS_T36[merged$ID== "MAV13"] <- 1.5
+merged$lesioni_T36[merged$ID== "MAV13"] <- 0
+merged$relapse_T36[merged$ID== "MAV13"] <- 0
+merged$cortisone_T36[merged$ID== "MAV13"] <- 0
+
+merged$EDSS_T36[merged$ID== "MAV14"] <- 1
+merged$lesioni_T36[merged$ID== "MAV14"] <- 0
+merged$relapse_T36[merged$ID== "MAV14"] <- 0
+merged$cortisone_T36[merged$ID== "MAV14"] <- 0
+
+merged$EDSS_T36[merged$ID== "MAV15"] <- 4.5
+merged$lesioni_T36[merged$ID== "MAV15"] <- 0
+merged$relapse_T36[merged$ID== "MAV15"] <- 0
+merged$cortisone_T36[merged$ID== "MAV15"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV17"] <- 1
+merged$lesioni_T30[merged$ID== "MAV17"] <- 0
+merged$relapse_T30[merged$ID== "MAV17"] <- 0
+merged$cortisone_T30[merged$ID== "MAV17"] <- 0
+merged$EDSS_T36[merged$ID== "MAV17"] <- 1
+merged$lesioni_T36[merged$ID== "MAV17"] <- 0
+merged$relapse_T36[merged$ID== "MAV17"] <- 0
+merged$cortisone_T36[merged$ID== "MAV17"] <- 0
+
+
+merged$EDSS_T12[merged$ID== "MAV18"] <- 2.5
+merged$lesioni_T12[merged$ID== "MAV18"] <- 0
+merged$relapse_T12[merged$ID== "MAV18"] <- 0
+merged$cortisone_T12[merged$ID== "MAV18"] <- 0
+merged$EDSS_T18[merged$ID== "MAV18"] <- 2.5
+merged$lesioni_T18[merged$ID== "MAV18"] <- 0
+merged$relapse_T18[merged$ID== "MAV18"] <- 0
+merged$cortisone_T18[merged$ID== "MAV18"] <- 0
+merged$EDSS_T24[merged$ID== "MAV18"] <- 2.5
+merged$lesioni_T24[merged$ID== "MAV18"] <- 0
+merged$relapse_T24[merged$ID== "MAV18"] <- 0
+merged$cortisone_T24[merged$ID== "MAV18"] <- 0
+merged$EDSS_T30[merged$ID== "MAV18"] <- 2.5
+merged$lesioni_T30[merged$ID== "MAV18"] <- 0
+merged$relapse_T30[merged$ID== "MAV18"] <- 0
+merged$cortisone_T30[merged$ID== "MAV18"] <- 0
+merged$EDSS_T36[merged$ID== "MAV18"] <- 2.5
+merged$lesioni_T36[merged$ID== "MAV18"] <- 0
+merged$relapse_T36[merged$ID== "MAV18"] <- 0
+merged$cortisone_T36[merged$ID== "MAV18"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV19"] <- 0
+merged$lesioni_T30[merged$ID== "MAV19"] <- 0
+merged$relapse_T30[merged$ID== "MAV19"] <- 0
+merged$cortisone_T30[merged$ID== "MAV19"] <- 0
+merged$EDSS_T36[merged$ID== "MAV19"] <- 0
+merged$lesioni_T36[merged$ID== "MAV19"] <- 0
+merged$relapse_T36[merged$ID== "MAV19"] <- 0
+merged$cortisone_T36[merged$ID== "MAV19"] <- 0
+
+merged$EDSS_T18[merged$ID== "MAV20"] <- 1
+merged$lesioni_T18[merged$ID== "MAV20"] <- 0
+merged$relapse_T18[merged$ID== "MAV20"] <- 0
+merged$cortisone_T18[merged$ID== "MAV20"] <- 0
+merged$EDSS_T24[merged$ID== "MAV20"] <- 1
+merged$lesioni_T24[merged$ID== "MAV20"] <- 0
+merged$relapse_T24[merged$ID== "MAV20"] <- 0
+merged$cortisone_T24[merged$ID== "MAV20"] <- 0
+merged$EDSS_T30[merged$ID== "MAV20"] <- 1
+merged$lesioni_T30[merged$ID== "MAV20"] <- 0
+merged$relapse_T30[merged$ID== "MAV20"] <- 0
+merged$cortisone_T30[merged$ID== "MAV20"] <- 0
+merged$EDSS_T36[merged$ID== "MAV20"] <- 1
+merged$lesioni_T36[merged$ID== "MAV20"] <- 0
+merged$relapse_T36[merged$ID== "MAV20"] <- 0
+merged$cortisone_T36[merged$ID== "MAV20"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV23"] <- 2
+merged$lesioni_T30[merged$ID== "MAV23"] <- 0
+merged$relapse_T30[merged$ID== "MAV23"] <- 0
+merged$cortisone_T30[merged$ID== "MAV23"] <- 0
+merged$EDSS_T36[merged$ID== "MAV23"] <- 2
+merged$lesioni_T36[merged$ID== "MAV23"] <- 0
+merged$relapse_T36[merged$ID== "MAV23"] <- 0
+merged$cortisone_T36[merged$ID== "MAV23"] <- 0
+
+merged$EDSS_T24[merged$ID== "MAV27"] <- 0
+merged$lesioni_T24[merged$ID== "MAV27"] <- 0
+merged$relapse_T24[merged$ID== "MAV27"] <- 0
+merged$cortisone_T24[merged$ID== "MAV27"] <- 0
+merged$EDSS_T30[merged$ID== "MAV27"] <- 0
+merged$lesioni_T30[merged$ID== "MAV27"] <- 0
+merged$relapse_T30[merged$ID== "MAV27"] <- 0
+merged$cortisone_T30[merged$ID== "MAV27"] <- 0
+merged$EDSS_T36[merged$ID== "MAV27"] <- 0
+merged$lesioni_T36[merged$ID== "MAV27"] <- 0
+merged$relapse_T36[merged$ID== "MAV27"] <- 0
+merged$cortisone_T36[merged$ID== "MAV27"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV28"] <- 0
+merged$lesioni_T30[merged$ID== "MAV28"] <- 0
+merged$relapse_T30[merged$ID== "MAV28"] <- 0
+merged$cortisone_T30[merged$ID== "MAV28"] <- 0
+merged$EDSS_T36[merged$ID== "MAV28"] <- 0
+merged$lesioni_T36[merged$ID== "MAV28"] <- 0
+merged$relapse_T36[merged$ID== "MAV28"] <- 0
+merged$cortisone_T36[merged$ID== "MAV28"] <- 0
+
+
+merged$EDSS_T18[merged$ID== "MAV29"] <- 1
+merged$lesioni_T18[merged$ID== "MAV29"] <- 0
+merged$relapse_T18[merged$ID== "MAV29"] <- 0
+merged$cortisone_T18[merged$ID== "MAV29"] <- 0
+
+
+
+merged$EDSS_T18[merged$ID== "MAV30"] <- 1
+merged$lesioni_T18[merged$ID== "MAV30"] <- 0
+merged$relapse_T18[merged$ID== "MAV30"] <- 0
+merged$cortisone_T18[merged$ID== "MAV30"] <- 0
+merged$EDSS_T24[merged$ID== "MAV30"] <- 1
+merged$lesioni_T24[merged$ID== "MAV30"] <- 0
+merged$relapse_T24[merged$ID== "MAV30"] <- 0
+merged$cortisone_T24[merged$ID== "MAV30"] <- 0
+merged$EDSS_T30[merged$ID== "MAV30"] <- 1
+merged$lesioni_T30[merged$ID== "MAV30"] <- 0
+merged$relapse_T30[merged$ID== "MAV30"] <- 0
+merged$cortisone_T30[merged$ID== "MAV30"] <- 0
+merged$EDSS_T36[merged$ID== "MAV30"] <- 1
+merged$lesioni_T36[merged$ID== "MAV30"] <- 0
+merged$relapse_T36[merged$ID== "MAV30"] <- 0
+merged$cortisone_T36[merged$ID== "MAV30"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV31"] <- 2.5
+merged$EDSS_T36[merged$ID== "MAV31"] <- 2.5
+merged$cortisone_T6[merged$ID== "MAV31"] <- 0
+merged$cortisone_T12[merged$ID== "MAV31"] <- 0
+merged$cortisone_T18[merged$ID== "MAV31"] <- 0
+merged$cortisone_T24[merged$ID== "MAV31"] <- 0
+merged$cortisone_T30[merged$ID== "MAV31"] <- 0
+merged$cortisone_T36[merged$ID== "MAV31"] <- 0
+
+merged$EDSS_T30[merged$ID== "MAV32"] <- 4
+merged$EDSS_T36[merged$ID== "MAV32"] <- 4
+merged$cortisone_T6[merged$ID== "MAV32"] <- 0
+merged$cortisone_T12[merged$ID== "MAV32"] <- 0
+merged$cortisone_T18[merged$ID== "MAV32"] <- 0
+merged$cortisone_T24[merged$ID== "MAV32"] <- 0
+merged$cortisone_T30[merged$ID== "MAV32"] <- 0
+merged$cortisone_T36[merged$ID== "MAV32"] <-0 
+  
+  
+merged$EDSS_T30[merged$ID== "MAV33"] <- 2.5
+merged$EDSS_T36[merged$ID== "MAV33"] <- 2.5
+merged$cortisone_T6[merged$ID== "MAV33"] <- 0
+merged$cortisone_T12[merged$ID== "MAV33"] <- 0
+merged$cortisone_T18[merged$ID== "MAV33"] <- 0
+merged$cortisone_T24[merged$ID== "MAV33"] <- 0
+merged$cortisone_T30[merged$ID== "MAV33"] <- 0
+merged$cortisone_T36[merged$ID== "MAV33"] <- 0
+
+
+merged$EDSS_T30[merged$ID== "MAV34"] <- 2
+merged$lesioni_T30[merged$ID== "MAV34"] <- 0
+merged$relapse_T30[merged$ID== "MAV34"] <- 0
+merged$cortisone_T30[merged$ID== "MAV34"] <- 0
+merged$EDSS_T36[merged$ID== "MAV34"] <- 2
+merged$lesioni_T36[merged$ID== "MAV34"] <- 0
+merged$relapse_T36[merged$ID== "MAV34"] <- 0
+merged$cortisone_T36[merged$ID== "MAV34"] <- 0
+merged$cortisone_T6[merged$ID== "MAV34"] <- 0
+merged$cortisone_T12[merged$ID== "MAV34"] <- 0
+merged$cortisone_T18[merged$ID== "MAV34"] <- 0
+merged$cortisone_T24[merged$ID== "MAV34"] <- 0
+merged$cortisone_T30[merged$ID== "MAV34"] <- 0
+merged$cortisone_T36[merged$ID== "MAV34"] <- 0
+
+
+
 #SOVRASCRIZIONE MERGED
 write.csv2(merged,
            "C:/Users/cecil/OneDrive/Documenti/TIROCINIO/Thesis_bertoldi/input/merged.csv",
@@ -1285,6 +1499,7 @@ write.csv2(merged,
 
 #apertura di merged
 merged <- read.csv2("input/merged.csv")
+
 
 
 
